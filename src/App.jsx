@@ -1967,7 +1967,7 @@ export default function App() {
     <div className="app">
       <header className="hero">
         <div className="heroOverlay">
-          <img src="/logo.png" alt="教會Logo" className="heroLogo" />
+          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="教會Logo" className="heroLogo" />
 
           <h1>楠西教會聖歌隊時程表&自主練習平台</h1>
 
