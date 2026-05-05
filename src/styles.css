@@ -1,0 +1,701 @@
+:root {
+  font-family: Arial, "PingFang TC", "Microsoft JhengHei", sans-serif;
+  color: #1f2937;
+  background: #f4f6f8;
+}
+
+body {
+  margin: 0;
+}
+
+button {
+  font-family: inherit;
+}
+
+.app {
+  min-height: 100vh;
+}
+
+.hero {
+  padding: 40px 24px;
+  background: linear-gradient(135deg, #e8f1ff, #ffffff);
+  border-bottom: 1px solid #dbe3ee;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #3b82f6;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+h1 {
+  margin: 0;
+  font-size: 32px;
+}
+
+.heroText {
+  margin: 12px 0 0;
+  color: #64748b;
+}
+
+.navbar {
+  display: flex;
+  gap: 8px;
+  padding: 12px 24px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  overflow-x: auto;
+}
+
+.navButton {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  padding: 10px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.navButton.active {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+.main {
+  padding: 24px;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+.card h2 {
+  margin-top: 0;
+}
+
+.muted {
+  color: #64748b;
+  font-size: 14px;
+}
+
+.list {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.listItem {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.videoGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+/* 手機版：一列一個 */
+@media (max-width: 640px) {
+  .videoGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.miniCard {
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #f8fafc;
+  padding: 16px;
+}
+
+.miniCard h3 {
+  margin-top: 0;
+}
+
+.dangerButton {
+  margin-top: 16px;
+  border: 1px solid #ef4444;
+  background: #fff;
+  color: #ef4444;
+  padding: 10px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.adminSection {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.formGrid label {
+  display: grid;
+  gap: 6px;
+  color: #334155;
+  font-weight: 700;
+}
+
+.formGrid input,
+.formGrid textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 15px;
+}
+
+.formGrid textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.fullWidth {
+  grid-column: 1 / -1;
+}
+
+.primaryButton {
+  border: 1px solid #2563eb;
+  background: #2563eb;
+  color: white;
+  padding: 11px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.smallDangerButton {
+  border: 1px solid #ef4444;
+  background: #fff;
+  color: #ef4444;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.videoCard {
+  overflow: hidden;
+}
+
+.videoThumb {
+  width: calc(100% + 32px);
+  margin: -16px -16px 12px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  display: block;
+  background: #e5e7eb;
+}
+
+.videoPlaceholder {
+  width: calc(100% + 32px);
+  margin: -16px -16px 12px;
+  aspect-ratio: 16 / 9;
+  display: grid;
+  place-items: center;
+  background: #e5e7eb;
+  color: #64748b;
+}
+
+.tagText {
+  display: inline-block;
+  background: #eef2ff;
+  color: #4338ca;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+.formGrid select {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 15px;
+  background: white;
+}
+
+.resourceList {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.resourceItem {
+  display: flex;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: white;
+}
+
+.smallThumb {
+  width: 88px;
+  height: 50px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #e5e7eb;
+}
+
+.resourceGroup {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.pdfPreview {
+  width: 100%;
+  height: 420px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.practiceList {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.schedulePracticeItem {
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #f8fafc;
+  padding: 14px;
+}
+
+.scheduleSongHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.scheduleSongHeader span {
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+.practiceBox {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.practiceBox h4 {
+  margin: 0 0 8px;
+}
+
+.resourceContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.voicePartGroups {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.voicePartGroup {
+  display: grid;
+  gap: 10px;
+}
+
+.voicePartTitle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f1f5f9;
+  border-radius: 999px;
+  padding: 8px 12px;
+  color: #334155;
+  font-weight: 700;
+}
+
+.voicePartTitle small {
+  color: #64748b;
+  font-weight: 400;
+}
+
+.practiceResourceGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.practiceResourceCard {
+  display: grid;
+  gap: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 12px;
+}
+
+.resourceIconBox {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  background: #f1f5f9;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+.resourceThumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.resourceIcon {
+  font-size: 36px;
+}
+
+.resourceBody {
+  display: grid;
+  gap: 10px;
+}
+
+.resourceMeta {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: start;
+}
+
+.resourceMeta span {
+  flex-shrink: 0;
+  background: #eef2ff;
+  color: #4338ca;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.secondaryButton {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  padding: 9px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.secondaryButton:hover {
+  background: #f8fafc;
+}
+
+.practiceResourceCard.score .pdfPreview {
+  height: 360px;
+  margin-top: 4px;
+}
+
+.videoBox {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+}
+
+.videoThumbWrapper {
+  position: relative;
+  cursor: pointer;
+}
+
+.videoThumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.playButton {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 48px;
+  color: white;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.videoIframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.practiceResourceCard {
+  display: grid;
+  gap: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 12px;
+}
+
+.resourceMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.resourceMeta span {
+  background: #eef2ff;
+  color: #4338ca;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.songsSingleColumn {
+  grid-template-columns: 1fr;
+}
+
+.inlineEditBox {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+}
+
+.inlineEditBox select {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 15px;
+  background: white;
+}
+
+.buttonRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.songListClean {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.songListItem {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+  border-radius: 14px;
+  padding: 16px;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  cursor: pointer;
+}
+
+.songListItem:hover {
+  background: #eef6ff;
+  border-color: #93c5fd;
+}
+
+.songListItem strong {
+  font-size: 18px;
+}
+
+.songListItem span {
+  flex-shrink: 0;
+  background: #eef2ff;
+  color: #4338ca;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  z-index: 1000;
+}
+
+.modalPanel {
+  width: min(960px, 100%);
+  max-height: 88vh;
+  overflow-y: auto;
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.25);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+}
+
+.modalHeader h2 {
+  margin: 0;
+}
+
+.scheduleListItem {
+  align-items: flex-start;
+}
+
+.scheduleSongPreview {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.scheduleSongPreviewItem {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 8px 10px;
+}
+
+.scheduleSongPreviewItem span {
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.scheduleSongPreviewItem small {
+  color: #64748b;
+}
+
+.videoCard {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.heroCenter {
+  text-align: center;
+}
+
+.heroCenter h1 {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.heroText {
+  text-align: center;
+  color: #64748b;
+}
+
+.hero {
+  position: relative;
+  background-image: url("/hero-bg.jpg");
+  background-size: cover;
+  background-position: center;
+  padding: 60px 20px;
+}
+
+/* 半透明遮罩（讓文字清楚） */
+.heroOverlay {
+  text-align: center;
+  background: rgba(255, 255, 255, 0.75);
+  padding: 40px 20px;
+  border-radius: 20px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Logo */
+.heroLogo {
+  width: 80px;
+  margin-bottom: 12px;
+}
+
+/* 標題 */
+.heroOverlay h1 {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+/* 副標 */
+.heroText {
+  color: #475569;
+}
+
+.loginCard {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.loginForm {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.loginForm input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 16px;
+}
+
+.adminHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+}
