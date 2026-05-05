@@ -640,7 +640,7 @@ h1 {
 
 .hero {
   position: relative;
-  background-image: url("/hero-bg.jpg");
+  background-image: url("./hero-bg.jpg");
   background-size: cover;
   background-position: center;
   padding: 60px 20px;
