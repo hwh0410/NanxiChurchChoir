@@ -1,2 +1,5 @@
 src/services/*.backup*.js
 .DS_Store
+src/*.before-*.jsx
+src/*.before-*.css
+src/services/*.before-*.js

@@ -699,3 +699,108 @@ h1 {
   gap: 16px;
   align-items: center;
 }
+/* 雲端同步狀態 */
+.syncStatusCard {
+  margin: 16px 0 20px;
+  padding: 18px;
+  border: 1px solid #dbe4ef;
+  border-radius: 18px;
+  background: #f8fafc;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+.syncStatusCard.success,
+.syncStatusCard.ready {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.syncStatusCard.saving,
+.syncStatusCard.loading {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.syncStatusCard.error {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.syncStatusMain {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.syncStatusLabel {
+  margin: 0 0 4px;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.syncStatusCard h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+  color: #0f172a;
+}
+
+.syncRefreshButton {
+  white-space: nowrap;
+}
+
+.syncStatusGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.syncStatusGrid div {
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.syncStatusGrid span {
+  display: block;
+  margin-bottom: 4px;
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.syncStatusGrid strong {
+  color: #0f172a;
+  font-size: 0.9rem;
+}
+
+.syncStatusError {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(254, 202, 202, 0.5);
+  color: #991b1b;
+  font-size: 0.9rem;
+  word-break: break-word;
+}
+
+@media (max-width: 768px) {
+  .syncStatusMain {
+    flex-direction: column;
+  }
+
+  .syncStatusGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .syncStatusGrid {
+    grid-template-columns: 1fr;
+  }
+}

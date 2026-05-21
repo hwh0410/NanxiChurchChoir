@@ -45,7 +45,7 @@ async function parseApiResponse(response) {
   return result;
 }
 
-export async function loadData() {
+export async function loadDataWithStatus() {
   const response = await fetch(`${API_BASE_URL}/api/data`, {
     method: "GET",
     headers: {
@@ -55,7 +55,26 @@ export async function loadData() {
 
   const result = await parseApiResponse(response);
 
-  return normalizeData(result.data);
+  return {
+    data: normalizeData(result.data),
+    cache: result.cache || null,
+  };
+}
+
+export async function loadData() {
+  const result = await loadDataWithStatus();
+  return result.data;
+}
+
+export async function getCloudStatus() {
+  const response = await fetch(`${API_BASE_URL}/cache-info`, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  return parseApiResponse(response);
 }
 
 export async function saveData(data) {
@@ -74,11 +93,15 @@ export async function saveData(data) {
     body: JSON.stringify(normalizeData(data)),
   });
 
-  await parseApiResponse(response);
+  return parseApiResponse(response);
 }
 
 export async function resetData() {
   const data = emptyData;
-  await saveData(data);
-  return data;
+  const result = await saveData(data);
+
+  return {
+    data,
+    cache: result.cache || null,
+  };
 }

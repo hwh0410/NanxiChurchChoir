@@ -6,9 +6,10 @@ import { useEffect, useState } from "react";
 import "./styles.css";
 import {
   emptyData,
-  loadData,
+  loadDataWithStatus,
   saveData,
   resetData,
+  getCloudStatus,
 } from "./services/supabaseDb";
 
 const pages = [
@@ -18,6 +19,101 @@ const pages = [
   { key: "archive", label: "歷年影片" },
   { key: "admin", label: "管理" },
 ];
+
+function formatSyncTime(value) {
+  if (!value) return "尚無紀錄";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "尚無紀錄";
+  }
+
+  return date.toLocaleString("zh-TW", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function SyncStatusCard({ syncStatus, onRefresh }) {
+  const stateLabelMap = {
+    loading: "讀取中",
+    ready: "已連線",
+    saving: "儲存中",
+    success: "同步完成",
+    error: "同步異常",
+    idle: "尚未同步",
+  };
+
+  const stateIconMap = {
+    loading: "⏳",
+    ready: "✅",
+    saving: "⏳",
+    success: "✅",
+    error: "⚠️",
+    idle: "ℹ️",
+  };
+
+  const state = syncStatus?.state || "idle";
+  const cache = syncStatus?.cache || null;
+
+  return (
+    <div className={`syncStatusCard ${state}`}>
+      <div className="syncStatusMain">
+        <div>
+          <p className="syncStatusLabel">雲端同步狀態</p>
+          <h3>
+            <span>{stateIconMap[state] || "ℹ️"}</span>
+            {stateLabelMap[state] || "同步狀態"}
+          </h3>
+          <p className="muted">
+            {syncStatus?.message || "正在等待同步狀態。"}
+          </p>
+        </div>
+
+        {onRefresh && (
+          <button
+            className="secondaryButton syncRefreshButton"
+            type="button"
+            onClick={onRefresh}
+            disabled={state === "loading" || state === "saving"}
+          >
+            重新檢查
+          </button>
+        )}
+      </div>
+
+      <div className="syncStatusGrid">
+        <div>
+          <span>資料來源</span>
+          <strong>Google Sheet</strong>
+        </div>
+
+        <div>
+          <span>LINE Bot 快取</span>
+          <strong>{cache?.hasCache ? "已建立" : "尚未確認"}</strong>
+        </div>
+
+        <div>
+          <span>快取時間</span>
+          <strong>{formatSyncTime(cache?.cachedAt)}</strong>
+        </div>
+
+        <div>
+          <span>上次儲存</span>
+          <strong>{formatSyncTime(syncStatus?.lastSavedAt)}</strong>
+        </div>
+      </div>
+
+      {syncStatus?.error && (
+        <p className="syncStatusError">錯誤原因：{syncStatus.error}</p>
+      )}
+    </div>
+  );
+}
 
 function ResourceCard({ resource }) {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -424,7 +520,7 @@ function ArchiveVideoCard({ video }) {
   );
 }
 
-function AdminPage({ data, setData, onReset }) {
+function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefreshSyncStatus }) {
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [adminEmail, setAdminEmail] = useState("");
@@ -562,9 +658,33 @@ function AdminPage({ data, setData, onReset }) {
   const updateData = async (newData) => {
     setData(newData);
 
+    setSyncStatus({
+      state: "saving",
+      message: "正在儲存至 Google Sheet，請稍候...",
+      cache: syncStatus?.cache || null,
+      lastSavedAt: syncStatus?.lastSavedAt || null,
+      error: "",
+    });
+
     try {
-      await saveData(newData);
+      const result = await saveData(newData);
+
+      setSyncStatus({
+        state: "success",
+        message: "已儲存至 Google Sheet，LINE Bot 已同步更新。",
+        cache: result.cache || null,
+        lastSavedAt: new Date().toISOString(),
+        error: "",
+      });
     } catch (error) {
+      setSyncStatus({
+        state: "error",
+        message: "儲存失敗，請檢查網路或管理員登入狀態。",
+        cache: syncStatus?.cache || null,
+        lastSavedAt: syncStatus?.lastSavedAt || null,
+        error: error.message,
+      });
+
       alert(`雲端資料儲存失敗：${error.message}`);
     }
   };
@@ -1063,6 +1183,11 @@ function AdminPage({ data, setData, onReset }) {
           登出
         </button>
       </div>
+
+      <SyncStatusCard
+        syncStatus={syncStatus}
+        onRefresh={onRefreshSyncStatus}
+      />
 
       <div className="adminTabs">
         <button className={adminTab === "schedule" ? "adminTab active" : "adminTab"} type="button" onClick={() => setAdminTab("schedule")}>排程管理</button>
@@ -1899,13 +2024,36 @@ export default function App() {
   const [activePage, setActivePage] = useState("home");
   const [data, setData] = useState(emptyData);
   const [isDataLoading, setIsDataLoading] = useState(true);
+  const [syncStatus, setSyncStatus] = useState({
+    state: "loading",
+    message: "正在讀取 Google Sheet 資料...",
+    cache: null,
+    lastSavedAt: null,
+    error: "",
+  });
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const cloudData = await loadData();
-        setData(cloudData);
+        const result = await loadDataWithStatus();
+
+        setData(result.data);
+        setSyncStatus({
+          state: "ready",
+          message: "已連線 Google Sheet，資料讀取成功。",
+          cache: result.cache || null,
+          lastSavedAt: null,
+          error: "",
+        });
       } catch (error) {
+        setSyncStatus({
+          state: "error",
+          message: "讀取雲端資料失敗。",
+          cache: null,
+          lastSavedAt: null,
+          error: error.message,
+        });
+
         alert(`讀取雲端資料失敗：${error.message}`);
       } finally {
         setIsDataLoading(false);
@@ -1920,10 +2068,62 @@ export default function App() {
     if (!ok) return;
 
     try {
-      const newData = await resetData();
-      setData(newData);
+      setSyncStatus({
+        state: "saving",
+        message: "正在清空並同步 Google Sheet...",
+        cache: syncStatus?.cache || null,
+        lastSavedAt: syncStatus?.lastSavedAt || null,
+        error: "",
+      });
+
+      const result = await resetData();
+
+      setData(result.data);
+      setSyncStatus({
+        state: "success",
+        message: "資料已清空並同步至 Google Sheet。",
+        cache: result.cache || null,
+        lastSavedAt: new Date().toISOString(),
+        error: "",
+      });
     } catch (error) {
+      setSyncStatus({
+        state: "error",
+        message: "重設資料失敗。",
+        cache: syncStatus?.cache || null,
+        lastSavedAt: syncStatus?.lastSavedAt || null,
+        error: error.message,
+      });
+
       alert(`重設資料失敗：${error.message}`);
+    }
+  };
+
+  const handleRefreshSyncStatus = async () => {
+    setSyncStatus((current) => ({
+      ...current,
+      state: "loading",
+      message: "正在重新檢查 LINE Bot 快取狀態...",
+      error: "",
+    }));
+
+    try {
+      const result = await getCloudStatus();
+
+      setSyncStatus((current) => ({
+        ...current,
+        state: "ready",
+        message: "已連線 Google Sheet，LINE Bot 快取狀態正常。",
+        cache: result.cache || null,
+        error: "",
+      }));
+    } catch (error) {
+      setSyncStatus((current) => ({
+        ...current,
+        state: "error",
+        message: "無法取得 LINE Bot 快取狀態。",
+        error: error.message,
+      }));
     }
   };
 
@@ -1945,7 +2145,16 @@ export default function App() {
     }
 
     if (activePage === "admin") {
-      return <AdminPage data={data} setData={setData} onReset={handleReset} />;
+      return (
+        <AdminPage
+          data={data}
+          setData={setData}
+          onReset={handleReset}
+          syncStatus={syncStatus}
+          setSyncStatus={setSyncStatus}
+          onRefreshSyncStatus={handleRefreshSyncStatus}
+        />
+      );
     }
 
     return <HomePage schedules={data.schedules} />;
