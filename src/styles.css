@@ -1,107 +1,366 @@
+/* =========================================================
+   楠西教會聖歌隊練習平台 — 設計系統
+   設計風格：溫暖教會感 × 現代簡潔卡片式 UI
+   ========================================================= */
+
+/* === CSS 設計變數 === */
 :root {
-  font-family: Arial, "PingFang TC", "Microsoft JhengHei", sans-serif;
-  color: #1f2937;
-  background: #f4f6f8;
+  --primary:        #4f46e5;
+  --primary-hover:  #4338ca;
+  --primary-light:  #818cf8;
+  --primary-bg:     #eef2ff;
+  --primary-border: #c7d2fe;
+
+  --bg:             #fafaf9;
+  --card:           #ffffff;
+  --border:         #e2e8f0;
+  --border-light:   #f1f5f9;
+
+  --text:           #1e1b4b;
+  --text-secondary: #374151;
+  --text-muted:     #64748b;
+
+  --shadow-card:  0 2px 16px rgba(79, 70, 229, 0.07), 0 1px 4px rgba(0, 0, 0, 0.04);
+  --shadow-modal: 0 24px 80px rgba(30, 27, 74, 0.22);
+
+  --radius-sm:   10px;
+  --radius-md:   14px;
+  --radius-lg:   18px;
+  --radius-xl:   22px;
+  --radius-pill: 999px;
+
+  --font-sans: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
+  --transition: 0.18s ease;
+}
+
+/* === 基礎重置 === */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  font-family: var(--font-sans);
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
 }
 
 body {
   margin: 0;
+  background: var(--bg);
 }
 
 button {
   font-family: inherit;
+  cursor: pointer;
 }
 
+h1, h2, h3, h4 {
+  line-height: 1.3;
+}
+
+a {
+  color: var(--primary);
+}
+
+/* === 整體 App === */
 .app {
   min-height: 100vh;
+  background: var(--bg);
 }
+
+/* =========================================================
+   Hero 區塊
+   ========================================================= */
 
 .hero {
-  padding: 40px 24px;
-  background: linear-gradient(135deg, #e8f1ff, #ffffff);
-  border-bottom: 1px solid #dbe3ee;
+  position: relative;
+  background-image: url("./hero-bg.jpg");
+  background-size: cover;
+  background-position: center;
+  padding: 52px 20px;
 }
 
-.eyebrow {
-  margin: 0 0 8px;
-  color: #3b82f6;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+.heroOverlay {
+  text-align: center;
+  background: rgba(255, 252, 248, 0.86);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  padding: 40px 36px;
+  border-radius: var(--radius-xl);
+  max-width: 740px;
+  margin: 0 auto;
+  box-shadow: 0 4px 32px rgba(79, 70, 229, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.85);
 }
 
-h1 {
-  margin: 0;
-  font-size: 32px;
+.heroLogo {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 2px 8px rgba(79, 70, 229, 0.18));
+}
+
+.heroOverlay h1 {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0 0 10px;
+  letter-spacing: -0.01em;
 }
 
 .heroText {
-  margin: 12px 0 0;
-  color: #64748b;
+  color: var(--text-muted);
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.65;
+  text-align: center;
 }
+
+/* =========================================================
+   導航列
+   ========================================================= */
 
 .navbar {
   display: flex;
   gap: 8px;
-  padding: 12px 24px;
+  padding: 11px 20px;
   background: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border);
   overflow-x: auto;
+  scrollbar-width: none;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.05);
+}
+
+.navbar::-webkit-scrollbar {
+  display: none;
 }
 
 .navButton {
-  border: 1px solid #d1d5db;
-  background: #ffffff;
-  padding: 10px 16px;
-  border-radius: 999px;
-  cursor: pointer;
-  font-size: 15px;
+  flex-shrink: 0;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  padding: 8px 18px;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.navButton:hover {
+  border-color: var(--primary-border);
+  color: var(--primary);
+  background: var(--primary-bg);
 }
 
 .navButton.active {
-  background: #2563eb;
+  background: var(--primary);
   color: white;
-  border-color: #2563eb;
+  border-color: var(--primary);
+  font-weight: 700;
+  box-shadow: 0 2px 12px rgba(79, 70, 229, 0.28);
 }
 
+/* =========================================================
+   主內容區
+   ========================================================= */
+
 .main {
-  padding: 24px;
+  padding: 24px 20px;
   max-width: 1080px;
   margin: 0 auto;
 }
 
+/* =========================================================
+   共用卡片
+   ========================================================= */
+
 .card {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 18px;
-  padding: 24px;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  box-shadow: var(--shadow-card);
 }
 
 .card h2 {
   margin-top: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.miniCard {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  padding: 16px;
+  transition: box-shadow var(--transition);
+}
+
+.miniCard:hover {
+  box-shadow: var(--shadow-card);
+}
+
+.miniCard h3 {
+  margin: 10px 0 6px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* =========================================================
+   文字輔助
+   ========================================================= */
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
 }
 
 .muted {
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 14px;
+  line-height: 1.55;
+  margin: 4px 0 0;
 }
+
+.tagText {
+  display: inline-block;
+  background: var(--primary-bg);
+  color: var(--primary-hover);
+  padding: 4px 11px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* =========================================================
+   按鈕
+   ========================================================= */
+
+.primaryButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: var(--primary);
+  color: white;
+  padding: 11px 20px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 700;
+  transition: background var(--transition), box-shadow var(--transition), transform 0.1s;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+}
+
+.primaryButton:hover {
+  background: var(--primary-hover);
+  box-shadow: 0 4px 16px rgba(79, 70, 229, 0.35);
+}
+
+.primaryButton:active {
+  transform: scale(0.98);
+}
+
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1.5px solid var(--border);
+  background: #ffffff;
+  color: var(--text-secondary);
+  padding: 9px 14px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  transition: all var(--transition);
+}
+
+.secondaryButton:hover {
+  background: var(--primary-bg);
+  border-color: var(--primary-border);
+  color: var(--primary);
+}
+
+.dangerButton {
+  margin-top: 16px;
+  border: 1.5px solid #ef4444;
+  background: #fff;
+  color: #ef4444;
+  padding: 10px 18px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  transition: all var(--transition);
+}
+
+.dangerButton:hover {
+  background: #fef2f2;
+}
+
+.smallDangerButton {
+  border: 1.5px solid #f87171;
+  background: #fff;
+  color: #ef4444;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  transition: all var(--transition);
+}
+
+.smallDangerButton:hover {
+  background: #fef2f2;
+}
+
+.buttonRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* =========================================================
+   清單
+   ========================================================= */
 
 .list {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   margin-top: 16px;
 }
 
 .listItem {
   display: flex;
   justify-content: space-between;
-  gap: 16px;
+  gap: 14px;
   align-items: center;
   padding: 14px 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   background: #f8fafc;
+  transition: border-color var(--transition);
 }
+
+.listItem:hover {
+  border-color: var(--primary-border);
+}
+
+/* =========================================================
+   格線
+   ========================================================= */
 
 .grid {
   display: grid;
@@ -113,42 +372,18 @@ h1 {
 .videoGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 20px;
 }
 
-/* 手機版：一列一個 */
 @media (max-width: 640px) {
   .videoGrid {
     grid-template-columns: 1fr;
   }
 }
 
-.miniCard {
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  background: #f8fafc;
-  padding: 16px;
-}
-
-.miniCard h3 {
-  margin-top: 0;
-}
-
-.dangerButton {
-  margin-top: 16px;
-  border: 1px solid #ef4444;
-  background: #fff;
-  color: #ef4444;
-  padding: 10px 16px;
-  border-radius: 12px;
-  cursor: pointer;
-}
-
-.adminSection {
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid #e5e7eb;
-}
+/* =========================================================
+   表單
+   ========================================================= */
 
 .formGrid {
   display: grid;
@@ -161,17 +396,32 @@ h1 {
   display: grid;
   gap: 6px;
   color: #334155;
+  font-size: 14px;
   font-weight: 700;
 }
 
 .formGrid input,
-.formGrid textarea {
+.formGrid textarea,
+.formGrid select {
   width: 100%;
   box-sizing: border-box;
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
-  padding: 10px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 13px;
   font-size: 15px;
+  font-family: var(--font-sans);
+  color: var(--text);
+  background: white;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  outline: none;
+  appearance: auto;
+}
+
+.formGrid input:focus,
+.formGrid textarea:focus,
+.formGrid select:focus {
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
 }
 
 .formGrid textarea {
@@ -183,105 +433,108 @@ h1 {
   grid-column: 1 / -1;
 }
 
-.primaryButton {
-  border: 1px solid #2563eb;
-  background: #2563eb;
-  color: white;
-  padding: 11px 16px;
-  border-radius: 12px;
+@media (max-width: 600px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================
+   歌曲列表
+   ========================================================= */
+
+.songListClean {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.songsSingleColumn {
+  grid-template-columns: 1fr;
+}
+
+.songListItem {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  background: #f8fafc;
+  border-radius: var(--radius-md);
+  padding: 16px;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
   cursor: pointer;
+  transition: all var(--transition);
+}
+
+.songListItem:hover {
+  background: var(--primary-bg);
+  border-color: var(--primary-border);
+  box-shadow: 0 2px 12px rgba(79, 70, 229, 0.08);
+}
+
+.songListItem strong {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.songListItem span {
+  flex-shrink: 0;
+  background: var(--primary-bg);
+  color: var(--primary);
+  padding: 5px 11px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* =========================================================
+   Modal
+   ========================================================= */
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(30, 27, 74, 0.5);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  z-index: 1000;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.modalPanel {
+  width: min(960px, 100%);
+  max-height: 88vh;
+  overflow-y: auto;
+  background: white;
+  border-radius: var(--radius-xl);
+  padding: 28px;
+  box-shadow: var(--shadow-modal);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 18px;
+  margin-bottom: 20px;
+}
+
+.modalHeader h2 {
+  margin: 0;
+  font-size: 18px;
   font-weight: 700;
 }
 
-.smallDangerButton {
-  border: 1px solid #ef4444;
-  background: #fff;
-  color: #ef4444;
-  padding: 8px 12px;
-  border-radius: 10px;
-  cursor: pointer;
-}
-
-.videoCard {
-  overflow: hidden;
-}
-
-.videoThumb {
-  width: calc(100% + 32px);
-  margin: -16px -16px 12px;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-  display: block;
-  background: #e5e7eb;
-}
-
-.videoPlaceholder {
-  width: calc(100% + 32px);
-  margin: -16px -16px 12px;
-  aspect-ratio: 16 / 9;
-  display: grid;
-  place-items: center;
-  background: #e5e7eb;
-  color: #64748b;
-}
-
-.tagText {
-  display: inline-block;
-  background: #eef2ff;
-  color: #4338ca;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 13px;
-}
-
-.formGrid select {
-  width: 100%;
-  box-sizing: border-box;
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
-  padding: 10px 12px;
-  font-size: 15px;
-  background: white;
-}
-
-.resourceList {
-  display: grid;
-  gap: 10px;
-  margin-top: 14px;
-}
-
-.resourceItem {
-  display: flex;
-  gap: 12px;
-  padding: 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  background: white;
-}
-
-.smallThumb {
-  width: 88px;
-  height: 50px;
-  border-radius: 8px;
-  object-fit: cover;
-  background: #e5e7eb;
-}
-
-.resourceGroup {
-  display: grid;
-  gap: 8px;
-  padding: 14px;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  background: #f8fafc;
-}
-
-.pdfPreview {
-  width: 100%;
-  height: 420px;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-}
+/* =========================================================
+   練習資源
+   ========================================================= */
 
 .practiceList {
   display: grid;
@@ -290,10 +543,10 @@ h1 {
 }
 
 .schedulePracticeItem {
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   background: #f8fafc;
-  padding: 14px;
+  padding: 16px;
 }
 
 .scheduleSongHeader {
@@ -304,55 +557,62 @@ h1 {
   margin-bottom: 12px;
 }
 
+.scheduleSongHeader strong {
+  font-size: 15px;
+}
+
 .scheduleSongHeader span {
+  flex-shrink: 0;
   background: #e0f2fe;
   color: #0369a1;
   padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 13px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .practiceBox {
   background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
 }
 
 .practiceBox h4 {
   margin: 0 0 8px;
+  font-weight: 700;
+  font-size: 15px;
 }
 
-.resourceContent {
-  flex: 1;
-  min-width: 0;
-}
+/* === 聲部群組 === */
 
 .voicePartGroups {
   display: grid;
-  gap: 16px;
+  gap: 18px;
   margin-top: 16px;
 }
 
 .voicePartGroup {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .voicePartTitle {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #f1f5f9;
-  border-radius: 999px;
-  padding: 8px 12px;
-  color: #334155;
+  background: var(--primary-bg);
+  border-radius: var(--radius-pill);
+  padding: 8px 14px;
+  color: var(--primary-hover);
   font-weight: 700;
+  font-size: 14px;
 }
 
 .voicePartTitle small {
-  color: #64748b;
+  color: var(--text-muted);
   font-weight: 400;
+  font-size: 12px;
 }
 
 .practiceResourceGrid {
@@ -361,20 +621,32 @@ h1 {
   gap: 12px;
 }
 
+/* === Resource Card === */
+
 .practiceResourceCard {
   display: grid;
   gap: 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   background: #ffffff;
-  padding: 12px;
+  padding: 14px;
+  transition: box-shadow var(--transition);
+}
+
+.practiceResourceCard:hover {
+  box-shadow: 0 4px 16px rgba(79, 70, 229, 0.09);
+}
+
+.practiceResourceCard.score .pdfPreview {
+  height: 360px;
+  margin-top: 4px;
 }
 
 .resourceIconBox {
   width: 100%;
   aspect-ratio: 16 / 9;
-  border-radius: 12px;
-  background: #f1f5f9;
+  border-radius: var(--radius-sm);
+  background: var(--border-light);
   overflow: hidden;
   display: grid;
   place-items: center;
@@ -399,41 +671,70 @@ h1 {
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  align-items: start;
+  align-items: center;
+}
+
+.resourceMeta strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
 }
 
 .resourceMeta span {
   flex-shrink: 0;
-  background: #eef2ff;
-  color: #4338ca;
-  padding: 3px 8px;
-  border-radius: 999px;
+  background: var(--primary-bg);
+  color: var(--primary-hover);
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
   font-size: 12px;
+  font-weight: 500;
 }
 
-.secondaryButton {
-  border: 1px solid #cbd5e1;
-  background: #ffffff;
-  color: #334155;
-  padding: 9px 12px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 700;
+.resourceContent {
+  flex: 1;
+  min-width: 0;
 }
 
-.secondaryButton:hover {
+.resourceList {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.resourceItem {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: white;
+}
+
+.resourceGroup {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   background: #f8fafc;
 }
 
-.practiceResourceCard.score .pdfPreview {
-  height: 360px;
-  margin-top: 4px;
+.smallThumb {
+  width: 88px;
+  height: 50px;
+  border-radius: 6px;
+  object-fit: cover;
+  background: var(--border-light);
 }
+
+/* =========================================================
+   影片
+   ========================================================= */
 
 .videoBox {
   width: 100%;
   aspect-ratio: 16 / 9;
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
   background: #000;
 }
@@ -441,12 +742,17 @@ h1 {
 .videoThumbWrapper {
   position: relative;
   cursor: pointer;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  display: block;
+  aspect-ratio: 16 / 9;
 }
 
 .videoThumb {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
 .playButton {
@@ -454,9 +760,14 @@ h1 {
   inset: 0;
   display: grid;
   place-items: center;
-  font-size: 48px;
+  font-size: 44px;
   color: white;
   background: rgba(0, 0, 0, 0.3);
+  transition: background var(--transition);
+}
+
+.videoThumbWrapper:hover .playButton {
+  background: rgba(0, 0, 0, 0.5);
 }
 
 .videoIframe {
@@ -465,130 +776,30 @@ h1 {
   border: none;
 }
 
-.practiceResourceCard {
-  display: grid;
-  gap: 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  background: #ffffff;
-  padding: 12px;
-}
-
-.resourceMeta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.resourceMeta span {
-  background: #eef2ff;
-  color: #4338ca;
-  padding: 3px 8px;
-  border-radius: 999px;
-  font-size: 12px;
-}
-
-.songsSingleColumn {
-  grid-template-columns: 1fr;
-}
-
-.inlineEditBox {
-  display: grid;
-  gap: 10px;
+.videoPlaceholder {
   width: 100%;
-}
-
-.inlineEditBox select {
-  width: 100%;
-  box-sizing: border-box;
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
-  padding: 10px 12px;
-  font-size: 15px;
-  background: white;
-}
-
-.buttonRow {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.songListClean {
-  display: grid;
-  gap: 12px;
-  margin-top: 16px;
-}
-
-.songListItem {
-  width: 100%;
-  border: 1px solid #e5e7eb;
-  background: #f8fafc;
-  border-radius: 14px;
-  padding: 16px;
-  text-align: left;
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: center;
-  cursor: pointer;
-}
-
-.songListItem:hover {
-  background: #eef6ff;
-  border-color: #93c5fd;
-}
-
-.songListItem strong {
-  font-size: 18px;
-}
-
-.songListItem span {
-  flex-shrink: 0;
-  background: #eef2ff;
-  color: #4338ca;
-  padding: 5px 10px;
-  border-radius: 999px;
-  font-size: 13px;
-}
-
-.modalOverlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.55);
+  aspect-ratio: 16 / 9;
   display: grid;
   place-items: center;
-  padding: 20px;
-  z-index: 1000;
+  background: var(--border-light);
+  color: var(--text-muted);
+  font-size: 14px;
+  border-radius: var(--radius-sm);
 }
 
-.modalPanel {
-  width: min(960px, 100%);
-  max-height: 88vh;
-  overflow-y: auto;
-  background: white;
-  border-radius: 20px;
-  padding: 24px;
-  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.25);
+.videoCard {
+  overflow: hidden;
 }
 
-.modalHeader {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: start;
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 16px;
-  margin-bottom: 16px;
+.videoCard h3 {
+  font-size: 15px;
+  margin: 10px 0 4px;
+  font-weight: 700;
 }
 
-.modalHeader h2 {
-  margin: 0;
-}
-
-.scheduleListItem {
-  align-items: flex-start;
-}
+/* =========================================================
+   排程預覽
+   ========================================================= */
 
 .scheduleSongPreview {
   display: grid;
@@ -602,128 +813,121 @@ h1 {
   flex-wrap: wrap;
   align-items: center;
   background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
 }
 
 .scheduleSongPreviewItem span {
   background: #e0f2fe;
   color: #0369a1;
   padding: 3px 8px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 12px;
+  font-weight: 500;
 }
 
 .scheduleSongPreviewItem small {
-  color: #64748b;
+  color: var(--text-muted);
+  font-size: 12px;
 }
 
-.videoCard {
-  max-width: 520px;
-  margin: 0 auto;
+.scheduleListItem {
+  align-items: flex-start;
 }
 
-.heroCenter {
-  text-align: center;
-}
-
-.heroCenter h1 {
-  font-size: 32px;
-  margin-bottom: 8px;
-}
-
-.heroText {
-  text-align: center;
-  color: #64748b;
-}
-
-.hero {
-  position: relative;
-  background-image: url("./hero-bg.jpg");
-  background-size: cover;
-  background-position: center;
-  padding: 60px 20px;
-}
-
-/* 半透明遮罩（讓文字清楚） */
-.heroOverlay {
-  text-align: center;
-  background: rgba(255, 255, 255, 0.75);
-  padding: 40px 20px;
-  border-radius: 20px;
-  max-width: 900px;
-  margin: 0 auto;
-}
-
-/* Logo */
-.heroLogo {
-  width: 80px;
-  margin-bottom: 12px;
-}
-
-/* 標題 */
-.heroOverlay h1 {
-  font-size: 32px;
-  margin-bottom: 10px;
-}
-
-/* 副標 */
-.heroText {
-  color: #475569;
-}
-
-.loginCard {
-  max-width: 520px;
-  margin: 0 auto;
-}
-
-.loginForm {
-  display: grid;
-  gap: 12px;
-  margin-top: 16px;
-}
-
-.loginForm input {
-  width: 100%;
-  box-sizing: border-box;
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
-  padding: 12px 14px;
-  font-size: 16px;
-}
+/* =========================================================
+   管理後台
+   ========================================================= */
 
 .adminHeader {
   display: flex;
   justify-content: space-between;
   gap: 16px;
   align-items: center;
+  margin-bottom: 4px;
 }
-/* 雲端同步狀態 */
+
+.adminSection {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.adminSection h3 {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* === Admin Tabs（BUG FIX：原本完全缺少此區塊的 CSS）=== */
+
+.adminTabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 0;
+}
+
+.adminTab {
+  border: 1.5px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  padding: 9px 16px;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  position: relative;
+  bottom: -2px;
+  border-bottom-color: transparent;
+}
+
+.adminTab:hover {
+  color: var(--primary);
+  background: var(--primary-bg);
+}
+
+.adminTab.active {
+  background: white;
+  color: var(--primary);
+  border-color: var(--border);
+  border-bottom-color: white;
+  box-shadow: inset 0 3px 0 var(--primary);
+}
+
+/* =========================================================
+   雲端同步狀態卡片
+   ========================================================= */
+
 .syncStatusCard {
-  margin: 16px 0 20px;
-  padding: 18px;
-  border: 1px solid #dbe4ef;
-  border-radius: 18px;
+  margin: 20px 0;
+  padding: 18px 20px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
   background: #f8fafc;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+  transition: border-color var(--transition), background var(--transition);
 }
 
 .syncStatusCard.success,
 .syncStatusCard.ready {
-  border-color: #bbf7d0;
-  background: #f0fdf4;
+  border-color: #a7f3d0;
+  background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
 }
 
 .syncStatusCard.saving,
 .syncStatusCard.loading {
   border-color: #fde68a;
-  background: #fffbeb;
+  background: linear-gradient(135deg, #fffbeb, #fefce8);
 }
 
 .syncStatusCard.error {
-  border-color: #fecaca;
-  background: #fef2f2;
+  border-color: #fca5a5;
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
 }
 
 .syncStatusMain {
@@ -735,18 +939,21 @@ h1 {
 
 .syncStatusLabel {
   margin: 0 0 4px;
-  color: #64748b;
-  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .syncStatusCard h3 {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 0 0 6px;
-  color: #0f172a;
+  margin: 0 0 4px;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .syncRefreshButton {
@@ -762,32 +969,159 @@ h1 {
 
 .syncStatusGrid div {
   padding: 10px 12px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.75);
-  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.2);
 }
 
 .syncStatusGrid span {
   display: block;
   margin-bottom: 4px;
-  color: #64748b;
-  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .syncStatusGrid strong {
-  color: #0f172a;
-  font-size: 0.9rem;
+  color: var(--text);
+  font-size: 13px;
 }
 
 .syncStatusError {
   margin: 12px 0 0;
-  padding: 10px 12px;
-  border-radius: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
   background: rgba(254, 202, 202, 0.5);
   color: #991b1b;
-  font-size: 0.9rem;
+  font-size: 13px;
   word-break: break-word;
 }
+
+/* =========================================================
+   登入
+   ========================================================= */
+
+.loginCard {
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.loginForm {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.loginForm input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 13px 15px;
+  font-size: 15px;
+  font-family: var(--font-sans);
+  color: var(--text);
+  transition: border-color var(--transition), box-shadow var(--transition);
+  outline: none;
+}
+
+.loginForm input:focus {
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+/* =========================================================
+   Inline Edit
+   ========================================================= */
+
+.inlineEditBox {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+}
+
+.inlineEditBox select,
+.inlineEditBox input,
+.inlineEditBox textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  font-size: 14px;
+  font-family: var(--font-sans);
+  background: white;
+  color: var(--text);
+  outline: none;
+  transition: border-color var(--transition);
+  appearance: auto;
+}
+
+.inlineEditBox select:focus,
+.inlineEditBox input:focus,
+.inlineEditBox textarea:focus {
+  border-color: var(--primary-light);
+}
+
+/* =========================================================
+   PDF Preview
+   ========================================================= */
+
+.pdfPreview {
+  width: 100%;
+  height: 420px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+/* =========================================================
+   載入畫面
+   ========================================================= */
+
+.loadingApp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.loadingScreen {
+  text-align: center;
+  padding: 44px 36px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  max-width: 300px;
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--primary-bg);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  margin: 0 auto 18px;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loadingText {
+  margin: 0 0 6px;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text);
+}
+
+/* =========================================================
+   RWD：平板以下
+   ========================================================= */
 
 @media (max-width: 768px) {
   .syncStatusMain {
@@ -799,8 +1133,64 @@ h1 {
   }
 }
 
+@media (max-width: 640px) {
+  /* Hero */
+  .hero {
+    padding: 28px 14px;
+  }
+
+  .heroOverlay {
+    padding: 28px 20px;
+    border-radius: var(--radius-lg);
+  }
+
+  .heroOverlay h1 {
+    font-size: 20px;
+  }
+
+  .heroLogo {
+    width: 56px;
+    height: 56px;
+  }
+
+  /* Main */
+  .main {
+    padding: 16px 14px;
+  }
+
+  .card {
+    padding: 20px 16px;
+  }
+
+  /* Modal */
+  .modalPanel {
+    padding: 20px 16px;
+  }
+
+  /* Admin tabs */
+  .adminTabs {
+    gap: 4px;
+  }
+
+  .adminTab {
+    padding: 7px 12px;
+    font-size: 13px;
+  }
+}
+
 @media (max-width: 480px) {
   .syncStatusGrid {
     grid-template-columns: 1fr;
+  }
+
+  .buttonRow {
+    flex-direction: column;
+  }
+
+  .buttonRow .primaryButton,
+  .buttonRow .secondaryButton,
+  .buttonRow .smallDangerButton {
+    width: 100%;
+    justify-content: center;
   }
 }

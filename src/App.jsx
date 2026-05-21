@@ -2162,12 +2162,12 @@ export default function App() {
 
   if (isDataLoading) {
     return (
-      <div className="app">
-        <main className="main">
-          <section className="card">
-            <h2>資料載入中...</h2>
-          </section>
-        </main>
+      <div className="app loadingApp">
+        <div className="loadingScreen">
+          <div className="loadingSpinner" />
+          <p className="loadingText">正在連接雲端資料...</p>
+          <p className="muted">楠西教會聖歌隊</p>
+        </div>
       </div>
     );
   }
