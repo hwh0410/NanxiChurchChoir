@@ -2,7 +2,7 @@ import { renderGoogleSignIn, authorizeGoogleCredential, resumeGoogleAdmin, clear
 import { getYoutubeEmbedUrl } from "./services/youtube";
 import { getGoogleDrivePreviewUrl } from "./services/googleDrive";
 import { getYoutubeThumbnail } from "./services/youtube";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   House, CalendarDays, Music2, Film, Settings2,
   ArrowRight, BookOpen, Play, ChevronLeft, ChevronRight, List, LayoutGrid
@@ -861,6 +861,9 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [loginError, setLoginError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const saveInFlight = useRef(false);
+  const [addSongToSchedule, setAddSongToSchedule] = useState(null);
 
   const [songForm, setSongForm] = useState({
     title: "",
@@ -965,19 +968,23 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
   }
 
   const updateData = async (newData) => {
-    setData(newData);
-
-    setSyncStatus({
+    if (saveInFlight.current) {
+      alert("正在儲存上一筆資料，請等雲端同步完成後再操作。");
+      return false;
+    }
+    saveInFlight.current = true;
+    setIsSaving(true);
+    setSyncStatus((current) => ({
+      ...current,
       state: "saving",
       message: "正在儲存至 Google Sheet，請稍候...",
-      cache: syncStatus?.cache || null,
-      lastSavedAt: syncStatus?.lastSavedAt || null,
       error: "",
-    });
-
+    }));
     try {
       const result = await saveData(newData);
-
+      // Publish the change to the UI after the server confirms the write.
+      // A failed request cannot leave a false 'saved' state on screen.
+      setData(result.data || newData);
       setSyncStatus({
         state: "success",
         message: "已儲存至 Google Sheet，LINE Bot 已同步更新。",
@@ -985,16 +992,19 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
         lastSavedAt: new Date().toISOString(),
         error: "",
       });
+      return true;
     } catch (error) {
-      setSyncStatus({
+      setSyncStatus((current) => ({
+        ...current,
         state: "error",
-        message: "儲存失敗，請檢查網路或管理員登入狀態。",
-        cache: syncStatus?.cache || null,
-        lastSavedAt: syncStatus?.lastSavedAt || null,
+        message: "儲存失敗；畫面資料尚未變更，請檢查網路或重新登入。",
         error: error.message,
-      });
-
-      alert(`雲端資料儲存失敗：${error.message}`);
+      }));
+      alert("雲端資料儲存失敗：" + error.message);
+      return false;
+    } finally {
+      saveInFlight.current = false;
+      setIsSaving(false);
     }
   };
 
@@ -1286,7 +1296,6 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
     if (ok) clearScheduleBuilder();
   };
 
-  const [addSongToSchedule, setAddSongToSchedule] = useState(null);
   const handleAppendScheduleSong = async (scheduleId) => {
     if (!addSongToSchedule?.songId || addSongToSchedule.scheduleId !== scheduleId) {
       alert("請選擇要加入的曲目");
