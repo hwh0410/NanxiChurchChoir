@@ -1015,7 +1015,7 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
     });
   };
 
-  const handleAddSong = (event) => {
+  const handleAddSong = async (event) => {
     event.preventDefault();
 
     if (!songForm.title) {
@@ -1029,12 +1029,12 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
       resources: [],
     };
 
-    updateData({
+    const saved = await updateData({
       ...data,
       songs: [newSong, ...data.songs],
     });
 
-    setSongForm({
+    if (saved) setSongForm({
       title: "",
       key: "",
       tempo: "",
@@ -1056,7 +1056,7 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
     });
   };
 
-  const handleSaveSongEdit = () => {
+  const handleSaveSongEdit = async () => {
     if (!editingSong || !editingSong.title) {
       alert("請至少填寫曲名");
       return;
@@ -1078,13 +1078,13 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
       }),
     }));
 
-    updateData({
+    const saved = await updateData({
       ...data,
       songs: newSongs,
       schedules: newSchedules,
     });
 
-    setEditingSong(null);
+    if (saved) setEditingSong(null);
   };
 
   const handleDeleteSong = (songId) => {
@@ -1112,7 +1112,7 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
     });
   };
 
-  const handleAddResource = (event) => {
+  const handleAddResource = async (event) => {
     event.preventDefault();
 
     if (!resourceForm.songId || !resourceForm.title || !resourceForm.url) {
@@ -1134,12 +1134,12 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
       };
     });
 
-    updateData({
+    const saved = await updateData({
       ...data,
       songs: newSongs,
     });
 
-    setResourceForm({
+    if (saved) setResourceForm({
       songId: "",
       type: "youtube",
       voicePart: "全體",
@@ -1162,7 +1162,7 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
     });
   };
 
-  const handleSaveResourceEdit = () => {
+  const handleSaveResourceEdit = async () => {
     if (!editingResource || !editingResource.title || !editingResource.url) {
       alert("請填寫資源名稱與連結");
       return;
@@ -1182,12 +1182,12 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
       };
     });
 
-    updateData({
+    const saved = await updateData({
       ...data,
       songs: newSongs,
     });
 
-    setEditingResource(null);
+    if (saved) setEditingResource(null);
   };
 
   const handleDeleteResource = (songId, resourceId) => {
@@ -1337,7 +1337,7 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
     });
   };
 
-  const handleSaveScheduleEdit = () => {
+  const handleSaveScheduleEdit = async () => {
     if (!editingSchedule || !editingSchedule.date || !editingSchedule.title) {
       alert("請填寫日期與聚會名稱");
       return;
@@ -1357,12 +1357,12 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
       })
       .sort((a, b) => a.date.localeCompare(b.date));
 
-    updateData({
+    const saved = await updateData({
       ...data,
       schedules: newSchedules,
     });
 
-    setEditingSchedule(null);
+    if (saved) setEditingSchedule(null);
   };
 
   const handleDeleteSchedule = (scheduleId) => {
@@ -1391,7 +1391,7 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
     });
   };
 
-  const handleSaveScheduleSongEdit = () => {
+  const handleSaveScheduleSongEdit = async () => {
     if (!editingScheduleSong) return;
 
     const selectedSong = data.songs.find(
@@ -1420,12 +1420,12 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
       };
     });
 
-    updateData({
+    const saved = await updateData({
       ...data,
       schedules: newSchedules,
     });
 
-    setEditingScheduleSong(null);
+    if (saved) setEditingScheduleSong(null);
   };
 
   const handleRemoveScheduleSong = (scheduleId, songId) => {
@@ -1451,7 +1451,7 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
     });
   };
 
-  const handleAddVideo = (event) => {
+  const handleAddVideo = async (event) => {
     event.preventDefault();
 
     if (!videoForm.title || !videoForm.youtubeUrl) {
@@ -1464,12 +1464,12 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
       ...videoForm,
     };
 
-    updateData({
+    const saved = await updateData({
       ...data,
       archiveVideos: [newVideo, ...data.archiveVideos],
     });
 
-    setVideoForm({
+    if (saved) setVideoForm({
       title: "",
       date: "",
       eventName: "",
@@ -1492,7 +1492,7 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
     });
   };
 
-  const handleSaveVideoEdit = () => {
+  const handleSaveVideoEdit = async () => {
     if (!editingVideo || !editingVideo.title || !editingVideo.youtubeUrl) {
       alert("請至少填寫曲名/標題與 YouTube 連結");
       return;
@@ -1503,12 +1503,12 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
       return editingVideo;
     });
 
-    updateData({
+    const saved = await updateData({
       ...data,
       archiveVideos: newVideos,
     });
 
-    setEditingVideo(null);
+    if (saved) setEditingVideo(null);
   };
 
   const handleDeleteVideo = (videoId) => {
@@ -1759,6 +1759,8 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
                       </div>
 
                       <div className="buttonRow">
+                        <button type="button" className="secondaryButton"
+                          onClick={() => copyScheduleToBuilder(schedule)}>複製行程</button>
                         <button
                           className="secondaryButton"
                           type="button"
