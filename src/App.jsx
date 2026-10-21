@@ -10,6 +10,7 @@ import {
 import "./styles.css";
 import "./theme-v1.css";
 import "./calendar-v1.css";
+import "./admin-phase2.css";
 import {
   emptyData,
   loadDataWithStatus,
@@ -1522,7 +1523,7 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
   };
 
   return (
-    <section className="card">
+    <section className={isSaving ? "card phase2SavingOverlay" : "card"} aria-busy={isSaving}>
       <div className="adminHeader">
         <div>
           <p className="eyebrow">ADMIN WORKSPACE</p>
