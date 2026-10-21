@@ -493,6 +493,15 @@ function firstSelectedDay(month, dates, today) {
   const date = dates.find((item) => item.date?.startsWith(month))?.date;
   return date || month + "-01";
 }
+// Display the actual songs attached to each event. Keep a single compact
+// line in the calendar cell, with the full text accessible via tooltip.
+function scheduledSongTitles(schedule) {
+  return (schedule.songs || []).map((item) => item.title).filter(Boolean);
+}
+function scheduledSongsLabel(schedule) {
+  return scheduledSongTitles(schedule).join("、");
+}
+
 function CalendarPage({ schedules, songs }) {
   const today = taiwanTodayDate();
   const sortedSchedules = [...schedules]
@@ -630,7 +639,12 @@ function CalendarPage({ schedules, songs }) {
                       <button key={event.id} type="button" className="choirCalendarEvent"
                         title={(event.title || "聚會") + "｜" + (event.serviceType || "聚會")}
                         onClick={() => viewSchedule(event)}>
-                        <span>{event.title}</span>
+                        <span className="choirCalendarEventTitle">{event.title}</span>
+                        {scheduledSongTitles(event).length > 0 && (
+                          <span className="choirCalendarSongLine" title={scheduledSongsLabel(event)}>
+                            <Music2 aria-hidden="true" />{scheduledSongsLabel(event)}
+                          </span>
+                        )}
                       </button>
                     ))}
                     {events.length > 2 && (
@@ -660,6 +674,9 @@ function CalendarPage({ schedules, songs }) {
               <span className="choirCalendarAgendaDescription">
                 <strong>{event.title}</strong>
                 <small>{event.serviceType || "聚會"} · {(event.songs || []).length} 首曲目</small>
+                {scheduledSongTitles(event).length > 0 && (
+                  <span className="choirCalendarAgendaSongs"><Music2 aria-hidden="true" />{scheduledSongsLabel(event)}</span>
+                )}
               </span>
               <ChevronRight aria-hidden="true" />
             </button>
@@ -696,6 +713,9 @@ function CalendarPage({ schedules, songs }) {
                   onClick={() => viewSchedule(event)}>
                   <span><strong>{event.title}</strong>
                     <small>{event.serviceType || "聚會"} · {(event.songs || []).length} 首曲目</small>
+                    {scheduledSongTitles(event).length > 0 && (
+                      <span className="choirCalendarSelectedSongs"><Music2 aria-hidden="true" />{scheduledSongsLabel(event)}</span>
+                    )}
                   </span>
                   <span className="choirCalendarSelectedLink">查看內容 <ArrowRight aria-hidden="true" /></span>
                 </button>
