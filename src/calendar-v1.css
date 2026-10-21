@@ -1,0 +1,137 @@
+/* Warm Hymn · Calendar: true month grid mapped to calendar dates. */
+.choirCalendar { padding: clamp(20px, 3vw, 36px); }
+.choirCalendarHeader { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; margin-bottom: 27px; }
+.choirCalendarHeader .eyebrow { margin-bottom: 6px; }
+.choirCalendarHeader h2 { margin: 0 0 7px; color: #344631; font-family: var(--font-display); font-size: clamp(24px, 2.5vw, 32px); }
+.choirCalendarHeader .muted { margin: 0; font-size: 13px; line-height: 1.8; }
+.choirCalendarViewSwitch { display: inline-flex; flex: none; padding: 4px; gap: 4px; background: #f2f0e8; border: 1px solid #e5dece; border-radius: 14px; }
+.choirCalendarViewSwitch button { border: 0; background: transparent; color: #6d6557; font-size: 13px; font-weight: 700; padding: 9px 14px; border-radius: 10px; display: inline-flex; gap: 7px; align-items: center; justify-content: center; white-space: nowrap; }
+.choirCalendarViewSwitch svg { width: 17px; height: 17px; }
+.choirCalendarViewSwitch button.active { background: #426249; color: #fff; box-shadow: 0 3px 10px #42624924; }
+.choirCalendarToolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 15px; }
+.choirCalendarMonthControls { display: inline-flex; align-items: center; gap: 11px; }
+.choirCalendarMonthControls strong { font: 700 clamp(20px, 2vw, 26px)/1.5 var(--font-display); color: #373d30; min-width: 172px; text-align: center; }
+.choirCalendarArrow { display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid #e5decd; border-radius: 12px; background: #fffdf8; color: #456149; }
+.choirCalendarArrow:hover { background: #eaf0e5; border-color: #c5d5bf; }
+.choirCalendarArrow svg { width: 18px; height: 18px; }
+.choirCalendarQuickActions { display: flex; align-items: center; gap: 13px; }
+.choirCalendarMonthCount { color: #7a7160; font-size: 12px; }
+.choirCalendarToday { font-size: 12px; font-weight: 700; color: #426249; background: #edf2e9; border: 1px solid #d8e2d1; padding: 9px 12px; border-radius: 10px; }
+.choirCalendarToday:hover { background: #e3ecdd; }
+.choirCalendarWeekdays { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0; border: 1px solid #e7e0d3; border-bottom: 0; border-radius: 17px 17px 0 0; overflow: hidden; background: #f7f5ed; }
+.choirCalendarWeekdays span { display: block; text-align: center; padding: 12px 3px; font-size: 13px; color: #615c4e; font-weight: 750; }
+.choirCalendarWeekdays .sunday { color: #986c3d; background: rgba(194,158,96,.085); }
+.choirCalendarWeekdays .saturday { color: #65756d; }
+.choirCalendarGrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); background: #e8e1d6; border: 1px solid #e7e0d3; border-top: 0; border-radius: 0 0 17px 17px; overflow: hidden; gap: 1px; }
+.choirCalendarDay { position: relative; background: #fffefa; min-height: clamp(106px, 10vw, 143px); padding: 10px 8px 7px; min-width: 0; transition: background .15s ease; }
+.choirCalendarDay:hover { background: #f7faf4; }
+.choirCalendarDay.isOutside { background: #f9f7f1; }
+.choirCalendarDay.isOutside .choirCalendarDate { opacity: .42; }
+.choirCalendarDay.isSunday:not(.isOutside) { background: #fffbf3; }
+.choirCalendarDay.isSelected { background: #f0f6ed !important; box-shadow: inset 0 0 0 2px #a3b89d; z-index: 1; }
+.choirCalendarDate { display: inline-flex; align-items: center; gap: 5px; color: #514c40; background: transparent; border: 0; border-radius: 10px; height: 30px; min-width: 30px; padding: 0 6px; font-weight: 730; font-size: 14px; }
+.choirCalendarDate:hover { background: #e4ecdf; }
+.choirCalendarDay.isSunday .choirCalendarDate { color: #976d3b; }
+.choirCalendarDay.isToday .choirCalendarDate { background: #426249; color: #fff; }
+.choirCalendarDate small { font-size: 10px; font-weight: 600; }
+.choirCalendarEvents { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
+.choirCalendarEvent { display: block; text-align: left; width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-radius: 7px; border: 1px solid #d2dfca; border-left: 3px solid #749577; background: #e9f1e4; color: #38583e; padding: 6px 6px; font-size: 12px; font-weight: 700; }
+.choirCalendarEvent:hover { background: #dbe9d5; border-color: #9ab797; }
+.choirCalendarEvent { white-space: normal; padding: 7px 6px; }
+.choirCalendarEvent .choirCalendarEventTitle { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 750; }
+.choirCalendarEvent .choirCalendarSongLine {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  max-width: 100%;
+  min-width: 0;
+  margin-top: 4px;
+  color: #596f51;
+  font-size: 10px;
+  font-weight: 550;
+  white-space: nowrap;
+}
+.choirCalendarSongLine svg,
+.choirCalendarAgendaSongs svg,
+.choirCalendarSelectedSongs svg { flex: 0 0 12px; width: 12px; height: 12px; }
+.choirCalendarSongText { display: block; flex: 1 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.choirCalendarAgendaSongs,
+.choirCalendarSelectedSongs { display: flex; align-items: center; gap: 5px; margin-top: 6px; font-size: 12px; color: #557052; min-width: 0; text-align: left; font-weight: 600; }
+.choirCalendarSelectedSongs { max-width: 100%; }
+.choirCalendarEvent > span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; display: block; }
+.choirCalendarMore { border: 0; background: transparent; padding: 0 4px; align-self: flex-start; color: #7d694d; font-size: 11px; font-weight: 600; }
+.choirCalendarMore:hover { text-decoration: underline; }
+.choirCalendarEventDots { display: none; }
+.choirCalendarLegend { display: flex; justify-content: flex-end; gap: 18px; margin: 13px 2px 24px; color: #766e60; font-size: 12px; }
+.choirCalendarLegend span { display: inline-flex; align-items: center; gap: 6px; }
+.choirCalendarLegend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; }
+.choirCalendarLegend .legendEvent { background: #7b9d79; }
+.choirCalendarLegend .legendToday { background: #426249; border-radius: 50%; }
+.choirCalendarSelectedPanel { margin-top: 22px; border: 1px solid #e7dfd2; border-radius: 20px; background: linear-gradient(120deg, #fffefa 0%, #f8f6ef 100%); padding: 23px 24px; }
+.choirCalendarSelectedHeading { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 15px; }
+.choirCalendarSelectedHeading .eyebrow { margin: 0 0 3px; font-size: 10px; }
+.choirCalendarSelectedHeading h3 { font: 700 21px/1.4 var(--font-display); color: #3b4b3b; margin: 0; }
+.choirCalendarSelectedHeading > span { padding: 6px 12px; background: #eef2e8; border: 1px solid #dfe8d9; border-radius: 99px; color: #426249; font-size: 12px; white-space: nowrap; }
+.choirCalendarSelectedList { display: grid; gap: 8px; }
+.choirCalendarSelectedEvent { display: flex; justify-content: space-between; align-items: center; text-align: left; gap: 12px; padding: 14px 15px; border: 1px solid #e5e1d6; border-radius: 13px; background: #fffdf8; width: 100%; }
+.choirCalendarSelectedEvent:hover { border-color: #b8ccb1; background: #f6faf3; }
+.choirCalendarSelectedEvent strong { display: block; color: #3e493b; font-size: 15px; }
+.choirCalendarSelectedEvent small { display: block; color: #7b7569; font-size: 12px; margin-top: 5px; }
+.choirCalendarSelectedLink { display: inline-flex; align-items: center; gap: 4px; color: #426249; font-size: 12px; font-weight: 750; white-space: nowrap; }
+.choirCalendarSelectedLink svg { width: 14px; height: 14px; }
+.choirCalendarSelectedNone { color: #857969; font-size: 13px; margin: 0; padding: 10px 0 2px; }
+.choirCalendarAgenda { display: grid; gap: 9px; }
+.choirCalendarAgendaRow { display: flex; gap: 16px; text-align: left; align-items: center; width: 100%; border: 1px solid #e6dece; border-radius: 16px; padding: 12px 15px; background: #fffefa; }
+.choirCalendarAgendaRow:hover { border-color: #b6caaa; background: #f7faf4; }
+.choirCalendarAgendaDate { flex: 0 0 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 9px 6px; background: #edf2e8; border-radius: 11px; color: #45664a; }
+.choirCalendarAgendaDate strong { font-size: 23px; line-height: 1.1; }
+.choirCalendarAgendaDate small { margin-top: 5px; font-size: 11px; }
+.choirCalendarAgendaDescription { flex: 1 1 0; min-width: 0; }
+.choirCalendarAgendaDescription strong { display: block; font-size: 15px; color: #363e31; }
+.choirCalendarAgendaDescription small { display: block; font-size: 12px; margin-top: 5px; color: #797264; }
+.choirCalendarAgendaRow > svg { width: 18px; height: 18px; color: #5b7e5f; flex: none; }
+.choirCalendarEmpty { display: flex; align-items: center; flex-direction: column; gap: 9px; padding: 30px 12px 19px; text-align: center; color: #807668; }
+.choirCalendarEmpty > svg { width: 27px; height: 27px; color: #a1ae94; }
+.choirCalendarEmpty p { margin: 0; }
+.choirCalendarEmpty .homeLink { margin-top: 4px; }
+@media (max-width: 950px) {
+ .choirCalendarDay { min-height: 99px; padding: 7px 5px; }
+ .choirCalendarEvent { font-size: 11px; padding: 5px 4px; }
+ .choirCalendarDate { font-size: 13px; }
+}
+@media (max-width: 700px) {
+ .choirCalendar { padding: 19px 12px; }
+ .choirCalendarHeader { gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+ .choirCalendarHeader h2 { font-size: 25px; }
+ .choirCalendarViewSwitch { width: 100%; }
+ .choirCalendarViewSwitch button { flex: 1 1 0; padding: 9px 8px; }
+ .choirCalendarToolbar { gap: 8px; }
+ .choirCalendarMonthControls { gap: 3px; }
+ .choirCalendarMonthControls strong { font-size: 19px; min-width: 130px; }
+ .choirCalendarArrow { width: 32px; height: 32px; border-radius: 8px; }
+ .choirCalendarQuickActions { gap: 5px; }
+ .choirCalendarMonthCount { display: none; }
+ .choirCalendarToday { font-size: 11px; padding: 8px 9px; }
+ .choirCalendarWeekdays span { padding: 9px 2px; font-size: 12px; }
+ .choirCalendarWeekdays .weekdayFull { display: none; }
+ .choirCalendarDay { min-height: 60px; padding: 6px 2px; }
+ .choirCalendarDate { width: 100%; justify-content: center; min-width: 0; font-size: 13px; min-height: 46px; height: 100%; padding: 0 0 10px; gap: 2px; }
+ .choirCalendarDay { position: relative; }
+ .choirCalendarEventDots { position: absolute; left: 0; right: 0; bottom: 5px; pointer-events: none; }
+ .choirCalendarDate small { font-size: 9px; }
+ .choirCalendarEvents { display: none; }
+ .choirCalendarEventDots { display: flex; min-height: 10px; gap: 3px; align-items: center; justify-content: center; }
+ .choirCalendarEventDots span { width: 6px; height: 6px; background: #779779; border-radius: 50%; }
+ .choirCalendarDay.isOutside .choirCalendarEventDots { opacity: .45; }
+ .choirCalendarLegend { margin: 12px 3px 17px; }
+ .choirCalendarSelectedPanel { margin-top: 13px; padding: 17px 14px; }
+ .choirCalendarSelectedHeading h3 { font-size: 18px; }
+ .choirCalendarSelectedEvent { padding: 12px 11px; }
+ .choirCalendarSelectedLink { font-size: 11px; }
+ .choirCalendarAgendaRow { padding: 11px; gap: 12px; }
+}
+@media (max-width: 360px) {
+ .choirCalendar { padding: 17px 8px; }
+ .choirCalendarMonthControls strong { min-width: 112px; font-size: 17px; }
+ .choirCalendarDay { min-height: 55px; }
+}
