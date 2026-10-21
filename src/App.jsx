@@ -5,7 +5,7 @@ import { getYoutubeThumbnail } from "./services/youtube";
 import { useEffect, useState } from "react";
 import {
   House, CalendarDays, Music2, Film, Settings2,
-  ArrowRight, BookOpen, Play
+  ArrowRight, BookOpen, Play, ChevronLeft, ChevronRight, List, LayoutGrid
 } from "lucide-react";
 import "./styles.css";
 import "./theme-v1.css";
@@ -477,61 +477,237 @@ function ScheduleDetailModal({ schedule, songs, onClose }) {
   );
 }
 
+// Build the calendar with date-only UTC arithmetic so Google Sheets
+// YYYY-MM-DD values never shift days when viewed in other time zones.
+function taiwanTodayDate() {
+  return new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+function monthShift(month, offset) {
+  const [year, monthNumber] = month.split("-").map(Number);
+  return new Date(Date.UTC(year, monthNumber - 1 + offset, 1))
+    .toISOString().slice(0, 7);
+}
+function firstSelectedDay(month, dates, today) {
+  if (today.startsWith(month)) return today;
+  const date = dates.find((item) => item.date?.startsWith(month))?.date;
+  return date || month + "-01";
+}
 function CalendarPage({ schedules, songs }) {
+  const today = taiwanTodayDate();
+  const sortedSchedules = [...schedules]
+    .filter((schedule) => /^\d{4}-\d{2}-\d{2}$/.test(schedule.date || ""))
+    .sort((a, b) => a.date.localeCompare(b.date) || (a.title || "").localeCompare(b.title || ""));
+  const initialMonth = () => {
+    const currentMonth = today.slice(0, 7);
+    if (sortedSchedules.some((event) => event.date.startsWith(currentMonth))) {
+      return currentMonth;
+    }
+    return sortedSchedules.find((event) => event.date >= today)?.date?.slice(0, 7) ||
+      sortedSchedules.at(-1)?.date?.slice(0, 7) || currentMonth;
+  };
+  const [visibleMonth, setVisibleMonth] = useState(initialMonth);
+  const [selectedDate, setSelectedDate] = useState(() =>
+    firstSelectedDay(initialMonth(), sortedSchedules, today)
+  );
+  const [viewMode, setViewMode] = useState("month");
   const [selectedSchedule, setSelectedSchedule] = useState(null);
+  const [year, monthNumber] = visibleMonth.split("-").map(Number);
+  const offset = new Date(Date.UTC(year, monthNumber - 1, 1)).getUTCDay();
+  const daysInMonth = new Date(Date.UTC(year, monthNumber, 0)).getUTCDate();
+  const totalCells = Math.max(35, Math.ceil((offset + daysInMonth) / 7) * 7);
+  const dates = Array.from({ length: totalCells }, (_, index) => {
+    const date = new Date(Date.UTC(year, monthNumber - 1, index + 1 - offset));
+    return {
+      key: date.toISOString().slice(0, 10),
+      day: date.getUTCDate(),
+      inMonth: date.getUTCMonth() === monthNumber - 1,
+      sunday: date.getUTCDay() === 0,
+      saturday: date.getUTCDay() === 6
+    };
+  });
+  const schedulesByDay = new Map();
+  sortedSchedules.forEach((schedule) => {
+    const list = schedulesByDay.get(schedule.date) || [];
+    list.push(schedule);
+    schedulesByDay.set(schedule.date, list);
+  });
+  const monthSchedules = sortedSchedules.filter((event) => event.date.startsWith(visibleMonth));
+  const selectedDaySchedules = schedulesByDay.get(selectedDate) || [];
+  const nextEvent = sortedSchedules.find((event) => event.date >= today) || null;
+  const monthLabel = new Date(Date.UTC(year, monthNumber - 1, 1))
+    .toLocaleDateString("zh-TW", { year: "numeric", month: "long", timeZone: "UTC" });
+
+  const jumpMonth = (month) => {
+    setVisibleMonth(month);
+    setSelectedDate(firstSelectedDay(month, sortedSchedules, today));
+    setSelectedSchedule(null);
+  };
+  const chooseDay = (key) => {
+    if (!key.startsWith(visibleMonth)) setVisibleMonth(key.slice(0, 7));
+    setSelectedDate(key);
+  };
+  const viewSchedule = (schedule) => {
+    setSelectedDate(schedule.date);
+    setSelectedSchedule(schedule);
+  };
 
   return (
-    <section className="card">
-      <h2>日曆排程</h2>
-      <p className="muted">點選排程可查看當天教材與練習資源。</p>
-
-      <div className="songListClean">
-        {schedules.map((schedule) => (
-          <button
-            className="songListItem scheduleListItem"
-            type="button"
-            key={schedule.id}
-            onClick={() => setSelectedSchedule(schedule)}
-          >
-            <div>
-              <strong>{schedule.date}｜{schedule.title}</strong>
-
-              <p className="muted">
-                {schedule.serviceType}｜{schedule.note || "無備註"}
-              </p>
-
-              <div className="scheduleSongPreview">
-                {(schedule.songs || []).map((scheduleSong) => {
-                  const fullSong = songs.find(
-                    (song) => song.id === scheduleSong.id
-                  );
-
-                  return (
-                    <div
-                      className="scheduleSongPreviewItem"
-                      key={`${schedule.id}-${scheduleSong.id}`}
-                    >
-                      <strong>{scheduleSong.title}</strong>
-                      <span>{scheduleSong.usageType}</span>
-                      <small>
-                        調性：{fullSong?.key || "-"}｜速度：{fullSong?.tempo || "-"}
-                      </small>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <span>{(schedule.songs || []).length} 首曲目</span>
+    <section className="card choirCalendar" aria-labelledby="calendar-heading">
+      <header className="choirCalendarHeader">
+        <div>
+          <p className="eyebrow">OUR CHOIR CALENDAR</p>
+          <h2 id="calendar-heading">詩班行事曆</h2>
+          <p className="muted">每場聚會都安排在對應日期上，點選即可查看獻詩曲目與練習資源。</p>
+        </div>
+        <div className="choirCalendarViewSwitch" role="group" aria-label="日曆顯示方式">
+          <button type="button" className={viewMode === "month" ? "active" : ""}
+            aria-pressed={viewMode === "month"} onClick={() => setViewMode("month")}>
+            <LayoutGrid aria-hidden="true" /> 月曆
           </button>
-        ))}
+          <button type="button" className={viewMode === "list" ? "active" : ""}
+            aria-pressed={viewMode === "list"} onClick={() => setViewMode("list")}>
+            <List aria-hidden="true" /> 清單
+          </button>
+        </div>
+      </header>
+
+      <div className="choirCalendarToolbar">
+        <div className="choirCalendarMonthControls">
+          <button type="button" className="choirCalendarArrow"
+            onClick={() => jumpMonth(monthShift(visibleMonth, -1))}
+            aria-label="上個月"><ChevronLeft aria-hidden="true" /></button>
+          <strong aria-live="polite">{monthLabel}</strong>
+          <button type="button" className="choirCalendarArrow"
+            onClick={() => jumpMonth(monthShift(visibleMonth, 1))}
+            aria-label="下個月"><ChevronRight aria-hidden="true" /></button>
+        </div>
+        <div className="choirCalendarQuickActions">
+          <span className="choirCalendarMonthCount">本月 {monthSchedules.length} 場聚會</span>
+          <button type="button" className="choirCalendarToday" onClick={() => jumpMonth(today.slice(0, 7))}>
+            回到今天
+          </button>
+        </div>
       </div>
 
-      <ScheduleDetailModal
-        schedule={selectedSchedule}
-        songs={songs}
-        onClose={() => setSelectedSchedule(null)}
-      />
+      {viewMode === "month" ? (
+        <>
+          <div className="choirCalendarWeekdays" aria-hidden="true">
+            {["日", "一", "二", "三", "四", "五", "六"].map((weekday, idx) =>
+              <span key={weekday} className={idx === 0 ? "sunday" : idx === 6 ? "saturday" : ""}>
+                <span className="weekdayFull">星期</span>{weekday}
+              </span>
+            )}
+          </div>
+          <div className="choirCalendarGrid">
+            {dates.map((day) => {
+              const events = schedulesByDay.get(day.key) || [];
+              const isToday = day.key === today;
+              const isSelected = day.key === selectedDate;
+              return (
+                <div key={day.key}
+                  className={[
+                    "choirCalendarDay",
+                    !day.inMonth ? "isOutside" : "",
+                    day.sunday ? "isSunday" : "",
+                    day.saturday ? "isSaturday" : "",
+                    isSelected ? "isSelected" : "",
+                    isToday ? "isToday" : ""
+                  ].filter(Boolean).join(" ")}>
+                  <button type="button" className="choirCalendarDate"
+                    aria-label={day.key + (events.length ? "，" + events.length + "場聚會" : "") + (isToday ? "，今天" : "")}
+                    aria-pressed={isSelected}
+                    onClick={() => chooseDay(day.key)}>
+                    <span>{day.day}</span>
+                    {isToday && <small>今</small>}
+                  </button>
+                  <div className="choirCalendarEventDots" aria-hidden="true">
+                    {events.slice(0, 3).map((event, index) =>
+                      <span key={event.id || index} />)}
+                  </div>
+                  <div className="choirCalendarEvents">
+                    {events.slice(0, 2).map((event) => (
+                      <button key={event.id} type="button" className="choirCalendarEvent"
+                        title={(event.title || "聚會") + "｜" + (event.serviceType || "聚會")}
+                        onClick={() => viewSchedule(event)}>
+                        <span>{event.title}</span>
+                      </button>
+                    ))}
+                    {events.length > 2 && (
+                      <button className="choirCalendarMore" type="button"
+                        onClick={() => chooseDay(day.key)}>另有 {events.length - 2} 場</button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="choirCalendarLegend">
+            <span><i className="legendEvent" />有安排聚會</span>
+            <span><i className="legendToday" />今天</span>
+          </div>
+        </>
+      ) : (
+        <div className="choirCalendarAgenda">
+          {monthSchedules.map((event) => (
+            <button key={event.id} type="button" className="choirCalendarAgendaRow"
+              onClick={() => viewSchedule(event)}>
+              <span className="choirCalendarAgendaDate">
+                <strong>{Number(event.date.slice(-2))}</strong>
+                <small>{["日", "一", "二", "三", "四", "五", "六"][
+                  new Date(event.date + "T00:00:00Z").getUTCDay()]}</small>
+              </span>
+              <span className="choirCalendarAgendaDescription">
+                <strong>{event.title}</strong>
+                <small>{event.serviceType || "聚會"} · {(event.songs || []).length} 首曲目</small>
+              </span>
+              <ChevronRight aria-hidden="true" />
+            </button>
+          ))}
+        </div>
+      )}
+
+      {monthSchedules.length === 0 && (
+        <div className="choirCalendarEmpty">
+          <CalendarDays aria-hidden="true" />
+          <p>這個月份還沒有排定聚會。</p>
+          {nextEvent && (
+            <button type="button" className="homeLink"
+              onClick={() => jumpMonth(nextEvent.date.slice(0, 7))}>
+              查看下一場聚會（{nextEvent.date}） <ArrowRight aria-hidden="true" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {viewMode === "month" && (
+        <div className="choirCalendarSelectedPanel" aria-live="polite">
+          <div className="choirCalendarSelectedHeading">
+            <div>
+              <p className="eyebrow">SELECTED DAY</p>
+              <h3>{selectedDate.replaceAll("-", " / ")}</h3>
+            </div>
+            <span>{selectedDaySchedules.length} 場聚會</span>
+          </div>
+          {selectedDaySchedules.length ? (
+            <div className="choirCalendarSelectedList">
+              {selectedDaySchedules.map((event) => (
+                <button key={event.id} type="button" className="choirCalendarSelectedEvent"
+                  onClick={() => viewSchedule(event)}>
+                  <span><strong>{event.title}</strong>
+                    <small>{event.serviceType || "聚會"} · {(event.songs || []).length} 首曲目</small>
+                  </span>
+                  <span className="choirCalendarSelectedLink">查看內容 <ArrowRight aria-hidden="true" /></span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="choirCalendarSelectedNone">這一天沒有安排聚會；點選其他有標記的日期查看。</p>
+          )}
+        </div>
+      )}
+
+      <ScheduleDetailModal schedule={selectedSchedule} songs={songs}
+        onClose={() => setSelectedSchedule(null)} />
     </section>
   );
 }
