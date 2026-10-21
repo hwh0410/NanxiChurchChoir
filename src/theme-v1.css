@@ -529,3 +529,100 @@ a { text-underline-offset: 3px; }
   .adminToolbar input { flex: 1 1 100%; }
   .adminHeader { align-items: flex-start; }
 }
+
+/* Safe nested GitHub Pages design preview */
+.designPreviewNotice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 20px;
+  padding: 9px max(18px, calc((100vw - 1250px) / 2));
+  background: #e5eddf;
+  border-bottom: 1px solid #c9d8c4;
+  color: #2d5537;
+  font-weight: 650;
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+.designPreviewNotice a {
+  color: #275235;
+  text-decoration: underline;
+  font-weight: 700;
+}
+.adminDesignPreview {
+  background: rgba(255, 253, 248, .97);
+}
+.adminReadOnlyTag {
+  background: #edf2e9;
+  border: 1px solid #c5d3bf;
+  color: #41664a;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  white-space: nowrap;
+  font-weight: 700;
+}
+.adminDesignList {
+  margin-top: 23px;
+  border: 1px solid #e5ddcd;
+  border-radius: 17px;
+  overflow: hidden;
+  background: #fffefa;
+}
+.adminDesignListHeading {
+  padding: 15px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f7f6ef;
+  border-bottom: 1px solid #eae2d5;
+}
+.adminDesignListHeading h3 {
+  margin: 0;
+  font-size: 17px;
+  font-family: var(--font-display);
+}
+.adminDesignListHeading span { font-size: 12px; color: #7b7467; }
+.adminDesignListItem {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #efe9df;
+}
+.adminDesignListItem:last-child { border-bottom: 0; }
+.adminDesignListItem strong { color: #383f35; font-size: 15px; }
+.adminDesignListItem .muted { margin-top: 3px; font-size: 12px; }
+.adminDesignEdit {
+  display: inline-flex;
+  flex: 0 0 auto;
+  padding: 7px 12px;
+  font-size: 12px;
+  color: #47704d;
+  background: #eff4ec;
+  border: 1px solid #dbe6d5;
+  border-radius: 9px;
+  pointer-events: none;
+}
+.adminDesignDisclaimer {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 22px 0 0;
+  padding: 12px;
+  border: 1px solid #dce7d3;
+  border-radius: 12px;
+  background: #f4f8ef;
+  color: #48634a;
+  line-height: 1.6;
+  font-size: 13px;
+}
+.adminDesignDisclaimer svg { flex: none; height: 17px; width: 17px; margin-top: 1px; }
+@media (max-width: 640px) {
+  .designPreviewNotice { padding: 10px 15px; }
+  .adminDesignListItem { padding: 13px 12px; }
+  .adminDesignEdit { padding: 6px 8px; }
+  .adminDesignListHeading { padding: 14px 12px; }
+  .adminReadOnlyTag { font-size: 11px; }
+}
