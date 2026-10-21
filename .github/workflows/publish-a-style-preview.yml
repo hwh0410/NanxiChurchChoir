@@ -31,6 +31,15 @@ jobs:
           VITE_API_BASE_URL: https://nanxichurchlinebot.onrender.com
           VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
         run: npm run build
+      - name: Check full-resolution images are bundled
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(wc -c < dist/media/church-hero.jpg)" -gt 100000
+          test "$(wc -c < dist/media/hills.jpg)" -gt 100000
+          test "$(wc -c < dist/media/flowers-right.png)" -gt 100000
+          test "$(wc -c < dist/media/flowers-left.png)" -gt 100000
+          echo "All four self-hosted HD images are present in the preview build"
       - name: Assert nested links and read-only guard
         shell: bash
         run: |
