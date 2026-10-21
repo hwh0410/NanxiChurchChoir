@@ -2458,6 +2458,116 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
   );
 }
 
+function Phase2ScheduleBuilderDemo({ data }) {
+  const [draft, setDraft] = useState({ date: "", title: "", serviceType: "主日" });
+  const [songDrafts, setSongDrafts] = useState([]);
+  const [example, setExample] = useState(null);
+  const [copyFrom, setCopyFrom] = useState("");
+  const copyExample = (id) => {
+    setCopyFrom(id);
+    const origin = data.schedules.find((item) => item.id === id);
+    if (!origin) return;
+    setDraft({ date: "", title: origin.title, serviceType: origin.serviceType || "主日" });
+    setSongDrafts((origin.songs || []).map((item) => ({
+      songId: item.id, usageType: item.usageType || "獻詩"
+    })));
+    setExample(null);
+  };
+  const move = (index, direction) => {
+    setSongDrafts((current) => {
+      const next = [...current], to = index + direction;
+      if (to < 0 || to >= next.length) return current;
+      [next[index], next[to]] = [next[to], next[index]];
+      return next;
+    });
+  };
+  const selectedSongs = songDrafts.map((item) => ({
+    name: data.songs.find((song) => song.id === item.songId)?.title,
+    usageType: item.usageType
+  }));
+  return (
+    <section className="phase2Demo" aria-label="第二期行程建立體驗">
+      <div className="phase2SectionHeading">
+        <div>
+          <p className="eyebrow">PHASE 2 · INTERACTIVE DEMO</p>
+          <h3>聚會與曲目安排工作台</h3>
+          <p className="muted">可以試填、加入曲目及調整順序。這裡只模擬操作，不會送出或修改任何 Google Sheets 資料。</p>
+        </div>
+        <span className="adminReadOnlyTag">互動試填</span>
+      </div>
+      <div className="phase2DemoTemplate">
+        <label>快速套用既有行程
+          <select value={copyFrom} onChange={(event) => copyExample(event.target.value)}>
+            <option value="">選擇要複製的行程（可不選）</option>
+            {data.schedules.slice().sort((a, b) => b.date.localeCompare(a.date)).map((item) => (
+              <option key={item.id} value={item.id}>{item.date} · {item.title}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className="formGrid phase2ScheduleForm">
+        <label>新行程日期
+          <input type="date" value={draft.date} onChange={(e) => setDraft((current) => ({...current,date:e.target.value}))}/>
+        </label>
+        <label>聚會類型
+          <select value={draft.serviceType} onChange={(e) => setDraft((current) => ({...current,serviceType:e.target.value}))}>
+            {["主日", "練習", "特別聚會", "其他"].map((item) => <option key={item}>{item}</option>)}
+          </select>
+        </label>
+        <label className="fullWidth">聚會名稱
+          <input value={draft.title} placeholder="例如：主日禮拜" onChange={(e) => setDraft((current) => ({...current,title:e.target.value}))}/>
+        </label>
+        <div className="fullWidth phase2SongBuilder">
+          <div className="phase2BuilderHeading">
+            <strong>詩歌清單（依順序）</strong>
+            <button type="button" className="secondaryButton" onClick={() =>
+              setSongDrafts((items) => [...items,{songId:"",usageType:"獻詩"}])}>＋ 加入曲目</button>
+          </div>
+          <div className="phase2DraftList">
+            {songDrafts.map((item, index) => (
+              <div className="phase2DraftRow" key={index}>
+                <span className="phase2DraftNumber">{index+1}</span>
+                <label className="phase2DraftSong">曲目
+                  <select value={item.songId} onChange={(event) => setSongDrafts((items) => items.map((x,i) =>
+                    i===index ? {...x,songId:event.target.value} : x
+                  ))}>
+                    <option value="">請選擇曲目</option>
+                    {data.songs.map((song) => <option key={song.id} value={song.id}>{song.title}</option>)}
+                  </select>
+                </label>
+                <label className="phase2DraftUsage">用途
+                  <select value={item.usageType} onChange={(event) => setSongDrafts((items) => items.map((x,i) =>
+                    i===index ? {...x,usageType:event.target.value} : x
+                  ))}>
+                    {["獻詩","敬拜詩","回應詩","練習曲","其他"].map((usage) => <option key={usage}>{usage}</option>)}
+                  </select>
+                </label>
+                <div className="phase2DraftActions">
+                  <button className="secondaryButton" type="button" disabled={index===0} onClick={() => move(index,-1)}>↑</button>
+                  <button className="secondaryButton" type="button" disabled={index===songDrafts.length-1} onClick={() => move(index,1)}>↓</button>
+                  <button className="secondaryButton" type="button" onClick={() => setSongDrafts((items) => items.filter((_,i) => i!==index))}>移除</button>
+                </div>
+              </div>
+            ))}
+            {!songDrafts.length && <p className="phase2DraftEmpty">尚無曲目，可以先建立行程再補上。</p>}
+          </div>
+        </div>
+        <button type="button" className="primaryButton" onClick={() => setExample({
+          ...draft, songs:selectedSongs
+        })}>預覽建立結果（不儲存）</button>
+      </div>
+      {example && (
+        <div className="phase2DemoResult" role="status">
+          <strong>模擬結果：{example.date || "尚未選擇日期"} · {example.title || "尚未填寫名稱"}</strong>
+          <p>{example.serviceType}｜{example.songs.length} 首曲目</p>
+          {example.songs.map((item, index) => <p key={index}>{index + 1}. {item.name || "尚未選曲"}（{item.usageType}）</p>)}
+          <small>這是畫面預覽，沒有建立行程，也沒有儲存資料。</small>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function AdminReadOnlyPreview({ data }) {
   const [tab, setTab] = useState("schedules");
   const [keyword, setKeyword] = useState("");
@@ -2500,6 +2610,7 @@ function AdminReadOnlyPreview({ data }) {
         <span><strong>{data.songs.length}</strong> 首曲目</span>
         <span><strong>{data.archiveVideos.length}</strong> 部影片</span>
       </div>
+      {tab === "schedules" && <Phase2ScheduleBuilderDemo data={data} />}
       <div className="adminTabs">
         {categories.map(cat => (
           <button
