@@ -1578,9 +1578,17 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
             {adminTab === "schedule" && (
         <>
 <div className="adminSection">
-        <h3>新增/更新每週排程</h3>
+        <div className="phase2SectionHeading">
+          <div>
+            <p className="eyebrow">SCHEDULE BUILDER</p>
+            <h3>建立聚會與曲目安排</h3>
+            <p className="muted">一次安排多首曲目、調整順序；尚未決定曲目也可以先建立行程。</p>
+          </div>
+          <button type="button" className="secondaryButton" onClick={clearScheduleBuilder}>清空表單</button>
+        </div>
+        {scheduleFormNotice && <p className="phase2FormNotice" role="status">{scheduleFormNotice}</p>}
 
-        <form className="formGrid" onSubmit={handleAddSchedule}>
+        <form id="new-schedule-form" className="formGrid phase2ScheduleForm" onSubmit={handleAddSchedule}>
           <label>
             日期 *
             <input
@@ -1612,34 +1620,50 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
             />
           </label>
 
-          <label>
-            曲目用途
-            <select
-              value={scheduleForm.usageType}
-              onChange={(e) => handleScheduleChange("usageType", e.target.value)}
-            >
-              <option value="獻詩">獻詩</option>
-              <option value="敬拜詩">敬拜詩</option>
-              <option value="回應詩">回應詩</option>
-              <option value="練習曲">練習曲</option>
-              <option value="其他">其他</option>
-            </select>
-          </label>
-
-          <label className="fullWidth">
-            選擇曲目 *
-            <select
-              value={scheduleForm.songId}
-              onChange={(e) => handleScheduleChange("songId", e.target.value)}
-            >
-              <option value="">請選擇曲目</option>
-              {data.songs.map((song) => (
-                <option key={song.id} value={song.id}>
-                  {song.title}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="fullWidth phase2SongBuilder">
+            <div className="phase2BuilderHeading">
+              <div><strong>獻詩／練習曲目</strong>
+                <p className="muted">可新增多首，也可以先保留空白，之後在現有行程補上。</p>
+              </div>
+              <button type="button" className="secondaryButton" onClick={addScheduleDraftSong}>＋ 新增一首</button>
+            </div>
+            {scheduleSongDrafts.length ? (
+              <div className="phase2DraftList">
+                {scheduleSongDrafts.map((item, index) => (
+                  <div className="phase2DraftRow" key={index}>
+                    <span className="phase2DraftNumber">{index + 1}</span>
+                    <label className="phase2DraftSong">
+                      曲目
+                      <select value={item.songId}
+                        onChange={(event) => changeScheduleDraftSong(index, "songId", event.target.value)}>
+                        <option value="">請選擇曲目</option>
+                        {data.songs.map((song) => (
+                          <option key={song.id} value={song.id}>{song.title}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="phase2DraftUsage">
+                      用途
+                      <select value={item.usageType}
+                        onChange={(event) => changeScheduleDraftSong(index, "usageType", event.target.value)}>
+                        {["獻詩", "敬拜詩", "回應詩", "練習曲", "其他"].map((usage) => (
+                          <option key={usage} value={usage}>{usage}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <div className="phase2DraftActions" role="group" aria-label={"第" + (index + 1) + "首曲目操作"}>
+                      <button type="button" className="secondaryButton" disabled={index === 0}
+                        aria-label="上移曲目" onClick={() => moveScheduleDraftSong(index, -1)}>↑</button>
+                      <button type="button" className="secondaryButton" disabled={index === scheduleSongDrafts.length - 1}
+                        aria-label="下移曲目" onClick={() => moveScheduleDraftSong(index, 1)}>↓</button>
+                      <button type="button" className="secondaryButton" aria-label="移除曲目"
+                        onClick={() => setScheduleSongDrafts((current) => current.filter((_, i) => i !== index))}>移除</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : <p className="phase2DraftEmpty">尚未加入曲目，這筆聚會可以先存成沒有曲目的行程。</p>}
+          </div>
 
           <label className="fullWidth">
             當週備註
@@ -1650,8 +1674,8 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
             />
           </label>
 
-          <button className="primaryButton" type="submit">
-            新增/更新排程
+          <button className="primaryButton" type="submit" disabled={isSaving}>
+            {isSaving ? "正在同步…" : "建立行程並儲存"}
           </button>
         </form>
       </div>
@@ -1755,6 +1779,31 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
                   )}
                 </div>
 
+                <div className="phase2ExistingSongTools">
+                  {addSongToSchedule?.scheduleId === schedule.id ? (
+                    <div className="phase2ExistingSongEditor">
+                      <select aria-label="加入曲目" value={addSongToSchedule.songId}
+                        onChange={(event) => setAddSongToSchedule((current) => ({ ...current, songId: event.target.value }))}>
+                        <option value="">選擇要加入的曲目</option>
+                        {data.songs.map((song) => <option key={song.id} value={song.id}>{song.title}</option>)}
+                      </select>
+                      <select aria-label="曲目用途" value={addSongToSchedule.usageType}
+                        onChange={(event) => setAddSongToSchedule((current) => ({ ...current, usageType: event.target.value }))}>
+                        {["獻詩", "敬拜詩", "回應詩", "練習曲", "其他"].map((usage) => (
+                          <option key={usage} value={usage}>{usage}</option>
+                        ))}
+                      </select>
+                      <button type="button" className="primaryButton" disabled={isSaving}
+                        onClick={() => handleAppendScheduleSong(schedule.id)}>儲存加入</button>
+                      <button type="button" className="secondaryButton"
+                        onClick={() => setAddSongToSchedule(null)}>取消</button>
+                    </div>
+                  ) : (
+                    <button type="button" className="secondaryButton" onClick={() => setAddSongToSchedule({
+                      scheduleId: schedule.id, songId: "", usageType: "獻詩"
+                    })}>＋ 加入曲目</button>
+                  )}
+                </div>
                 {(schedule.songs || []).map((song) => {
                   const isEditing =
                     editingScheduleSong &&
