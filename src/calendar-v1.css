@@ -94,7 +94,9 @@
  .choirCalendarWeekdays span { padding: 9px 2px; font-size: 12px; }
  .choirCalendarWeekdays .weekdayFull { display: none; }
  .choirCalendarDay { min-height: 60px; padding: 6px 2px; }
- .choirCalendarDate { width: 100%; justify-content: center; min-width: 0; font-size: 13px; height: 27px; padding: 0; gap: 2px; }
+ .choirCalendarDate { width: 100%; justify-content: center; min-width: 0; font-size: 13px; min-height: 46px; height: 100%; padding: 0 0 10px; gap: 2px; }
+ .choirCalendarDay { position: relative; }
+ .choirCalendarEventDots { position: absolute; left: 0; right: 0; bottom: 5px; pointer-events: none; }
  .choirCalendarDate small { font-size: 9px; }
  .choirCalendarEvents { display: none; }
  .choirCalendarEventDots { display: flex; min-height: 10px; gap: 3px; align-items: center; justify-content: center; }
