@@ -49,3 +49,16 @@
  .phase2ExistingSongEditor { flex-direction:column; align-items:stretch; }
  .phase2ExistingSongEditor select, .phase2ExistingSongEditor button { width:100%; flex:auto; }
 }
+
+.phase2Demo { margin:25px 0; border:1px solid #d7e2d0; border-radius:18px; padding:22px; background:#fbfcf7; }
+.phase2DemoTemplate { margin:16px 0; }
+.phase2DemoTemplate label { display:grid; gap:7px; font-size:13px; font-weight:700; color:#3e563f; }
+.phase2DemoTemplate select { width:100%; background:white; color:#3b4b3b; border:1px solid #dce1d5; border-radius:12px; padding:11px; }
+.phase2Demo .formGrid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.phase2DemoResult { border:1px solid #c1d9bb; border-radius:14px; background:#f0f7eb; padding:17px; margin-top:20px; font-size:13px; color:#365b41; }
+.phase2DemoResult p { margin:7px 0; }
+.phase2DemoResult small { display:block; margin-top:10px; color:#5d7258; }
+@media(max-width:650px) {
+ .phase2Demo { padding:14px; }
+ .phase2Demo .formGrid { grid-template-columns:1fr; }
+}
