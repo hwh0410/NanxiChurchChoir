@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import "./styles.css";
 import "./theme-v1.css";
+import "./calendar-v1.css";
 import {
   emptyData,
   loadDataWithStatus,
