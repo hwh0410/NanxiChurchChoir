@@ -4,3 +4,7 @@ src/*.before-*.jsx
 src/*.before-*.css
 src/services/*.before-*.js
 node_modules/.cache/
+
+.env
+.env.local
+.env.*.local
