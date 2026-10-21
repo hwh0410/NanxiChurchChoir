@@ -10,7 +10,7 @@ import {
   saveData,
   resetData,
   getCloudStatus,
-} from "./services/supabaseDb";
+} from "./services/cloudDb";
 
 const pages = [
   { key: "home", label: "首頁" },
