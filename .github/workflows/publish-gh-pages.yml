@@ -1,12 +1,18 @@
 name: Publish choir site to GitHub Pages
 
-# Manual production release: keep the current site online until the Render
-# backend has been deployed and Google admin authentication has been checked.
+# The approved visual release is published when merged to main.
+# Subsequent releases can use workflow_dispatch for controlled rollout.
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: nanxi-production-pages
+  cancel-in-progress: false
 
 jobs:
   publish:
@@ -18,10 +24,12 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - name: Validate Google OAuth client ID and build
+      - name: Validate Google OAuth client ID and build production
         env:
           VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
           VITE_API_BASE_URL: https://nanxichurchlinebot.onrender.com
+          VITE_BASE_PATH: /NanxiChurchChoir/
+          VITE_READ_ONLY_PREVIEW: "false"
         shell: bash
         run: |
           if [[ ! "$VITE_GOOGLE_CLIENT_ID" =~ ^[0-9]+-[[:alnum:]-]+\.apps\.googleusercontent\.com$ ]]; then
@@ -29,9 +37,20 @@ jobs:
             exit 1
           fi
           npm run build
-      - name: Publish to the existing gh-pages branch
+      - name: Verify release assets and site base path
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q '/NanxiChurchChoir/assets/' dist/index.html
+          grep -q '楠西教會聖歌隊' dist/index.html
+          for asset in church-hero.jpg hills.jpg flowers-left.png flowers-right.png; do
+            test -s "dist/media/$asset" || { echo "::error::Missing $asset"; exit 1; }
+            test "$(wc -c < "dist/media/$asset")" -gt 100000 || { echo "::error::Low-resolution image $asset"; exit 1; }
+          done
+      - name: Publish to existing gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
           publish_branch: gh-pages
+          keep_files: true

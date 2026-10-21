@@ -3,7 +3,12 @@ import { getYoutubeEmbedUrl } from "./services/youtube";
 import { getGoogleDrivePreviewUrl } from "./services/googleDrive";
 import { getYoutubeThumbnail } from "./services/youtube";
 import { useEffect, useState } from "react";
+import {
+  House, CalendarDays, Music2, Film, Settings2,
+  ArrowRight, BookOpen, Play
+} from "lucide-react";
 import "./styles.css";
+import "./theme-v1.css";
 import {
   emptyData,
   loadDataWithStatus,
@@ -12,12 +17,14 @@ import {
   getCloudStatus,
 } from "./services/cloudDb";
 
+const IS_DESIGN_PREVIEW = import.meta.env.VITE_READ_ONLY_PREVIEW === "true";
+
 const pages = [
-  { key: "home", label: "首頁" },
-  { key: "calendar", label: "日曆" },
-  { key: "songs", label: "曲目" },
-  { key: "archive", label: "歷年影片" },
-  { key: "admin", label: "管理" },
+  { key: "home", label: "首頁", icon: House },
+  { key: "calendar", label: "日曆", icon: CalendarDays },
+  { key: "songs", label: "曲目", icon: Music2 },
+  { key: "archive", label: "歷年影片", icon: Film },
+  { key: "admin", label: "管理", icon: Settings2 },
 ];
 
 function formatSyncTime(value) {
@@ -247,53 +254,186 @@ function SongPracticeResources({ song, showHeader = true }) {
   );
 }
 
-function HomePage({ schedules, songs }) {
-  const today = new Date().toISOString().slice(0, 10);
-
-  const upcomingSchedules = schedules
-    .filter((s) => s.date >= today)
-    .sort((a, b) => a.date.localeCompare(b.date));
-
-  const nextSchedule =
-    upcomingSchedules.length > 0
-      ? upcomingSchedules[0]
-      : schedules.length > 0
-      ? schedules[schedules.length - 1]
-      : null;
+function HomePage({ schedules, songs, archiveVideos, onNavigate }) {
+  // Schedule dates are local calendar dates; use Taiwan's date, not UTC.
+  const today = new Date(Date.now() + 8 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+  const orderedSchedules = [...schedules].sort((a, b) =>
+    a.date.localeCompare(b.date)
+  );
+  const nextSchedule = orderedSchedules.find((schedule) => schedule.date >= today);
+  const displayedSchedule = nextSchedule || orderedSchedules.at(-1) || null;
+  const mainSong = displayedSchedule?.songs?.[0] || null;
+  const fullMainSong = songs.find((song) => song.id === mainSong?.id);
+  const latestVideo = [...archiveVideos]
+    .sort((a, b) => (b.date || "").localeCompare(a.date || ""))[0] || null;
+  const videoThumb = latestVideo
+    ? getYoutubeThumbnail(latestVideo.youtubeUrl)
+    : null;
 
   return (
-    <section className="card">
-      <h2>本週曲目</h2>
-
-      {!nextSchedule ? (
-        <p>目前尚未建立排程。</p>
-      ) : (
+    <div className="homePage">
+      <div className="homeWelcome">
         <div>
-          <p className="muted">
-            {nextSchedule.date}｜{nextSchedule.serviceType}｜{nextSchedule.title}
+          <p className="eyebrow">WORSHIP · LEARN · TOGETHER</p>
+          <h2>讓每一次練習，都更靠近彼此。</h2>
+          <p>從本週獻詩開始，快速找到行程、樂譜和各聲部的練習資源。</p>
+        </div>
+        <button className="homeLink" type="button" onClick={() => onNavigate("calendar")}>
+          瀏覽行程 <ArrowRight aria-hidden="true" />
+        </button>
+      </div>
+
+      <div className="homeHighlights">
+        <article className="homeHighlight">
+          <div className="homeCardTop">
+            <span className="homeCardIcon"><CalendarDays aria-hidden="true" /></span>
+            近期聚會
+          </div>
+          <h3 className="homeCardTitle">
+            {nextSchedule?.title || (displayedSchedule ? "目前沒有未來行程" : "尚未安排聚會")}
+          </h3>
+          <p className="homeCardMeta">
+            {nextSchedule
+              ? [nextSchedule.date, nextSchedule.serviceType].filter(Boolean).join(" · ")
+              : displayedSchedule
+                ? "可以查看先前的聚會紀錄"
+                : "待管理員新增行程"}
           </p>
+          <button className="homeCardAction" type="button" onClick={() => onNavigate("calendar")}>
+            查看行程 <ArrowRight aria-hidden="true" />
+          </button>
+        </article>
 
-          <h3>{nextSchedule.note || "本週安排"}</h3>
+        <article className="homeHighlight">
+          <div className="homeCardTop">
+            <span className="homeCardIcon"><Music2 aria-hidden="true" /></span>
+            最近安排曲目
+          </div>
+          <h3 className="homeCardTitle">{mainSong?.title || "等待新曲目"}</h3>
+          <p className="homeCardMeta">
+            {mainSong
+              ? (nextSchedule ? nextSchedule.date + " · " : "先前安排 · ") + (mainSong.usageType || "獻詩")
+              : "曲目公布後會顯示在這裡"}
+          </p>
+          <button className="homeCardAction" type="button" onClick={() => onNavigate("songs")}>
+            瀏覽曲目庫 <ArrowRight aria-hidden="true" />
+          </button>
+        </article>
 
+        <article className="homeHighlight">
+          <div className="homeCardTop">
+            <span className="homeCardIcon"><BookOpen aria-hidden="true" /></span>
+            自主練習
+          </div>
+          <h3 className="homeCardTitle">
+            {fullMainSong?.resources?.length
+              ? fullMainSong.resources.length + " 個練習資源"
+              : "一起預備練習"}
+          </h3>
+          <p className="homeCardMeta">
+            {fullMainSong?.resources?.length
+              ? "樂譜、示範影片及各聲部練習"
+              : "從曲目資料庫尋找現有樂譜和音檔"}
+          </p>
+          <button className="homeCardAction" type="button" onClick={() => onNavigate("songs")}>
+            開始練習 <ArrowRight aria-hidden="true" />
+          </button>
+        </article>
+
+        <article className="homeHighlight homeVideoTile">
+          <div className="homeCardTop">
+            <span className="homeCardIcon"><Film aria-hidden="true" /></span>
+            近期影片
+          </div>
+          {latestVideo && videoThumb && (
+            <button
+              type="button"
+              className="homeVideoThumbButton"
+              onClick={() => onNavigate("archive")}
+              aria-label={"前往歷年影片，查看" + latestVideo.title}
+            >
+              <img src={videoThumb} loading="lazy" alt="" />
+              <span className="homeVideoPlay"><Play aria-hidden="true" /></span>
+            </button>
+          )}
+          <h3 className="homeCardTitle">{latestVideo?.title || "珍藏詩班的歌聲"}</h3>
+          <p className="homeCardMeta">{latestVideo ? [latestVideo.date, latestVideo.eventName].filter(Boolean).join(" · ") : "演唱紀錄將陸續更新"}</p>
+          <button className="homeCardAction" type="button" onClick={() => onNavigate("archive")}>
+            歷年演唱影片 <ArrowRight aria-hidden="true" />
+          </button>
+        </article>
+      </div>
+
+      <section
+        className="homeScripture"
+        style={{ "--landscape-art": `url("${import.meta.env.BASE_URL}media/hills.jpg?v=hd-20261022")` }}
+        aria-label="詩班的心聲"
+      >
+        <div className="homeScriptureInner">
+          <p>以詩歌相聚 · 在信仰中同行</p>
+          <blockquote>「你們要向耶和華唱新歌！」</blockquote>
+          <span>— 詩篇 96:1</span>
+        </div>
+      </section>
+
+      <section className="card homePractice" aria-labelledby="home-practice-title">
+        <div className="homeSectionTitle">
+          <div>
+            <h2 id="home-practice-title">{nextSchedule ? "近期獻詩與練習" : "詩班曲目與練習"}</h2>
+            <p>
+              {displayedSchedule
+                ? [displayedSchedule.date, displayedSchedule.title].filter(Boolean).join(" · ")
+                : "所有曲目都可以在曲目資料庫查詢"}
+            </p>
+          </div>
+          <button className="homeLink" type="button" onClick={() => onNavigate("songs")}>
+            所有曲目 <ArrowRight aria-hidden="true" />
+          </button>
+        </div>
+        {displayedSchedule?.songs?.length ? (
           <div className="practiceList">
-            {(nextSchedule.songs || []).map((scheduleSong) => {
+            {displayedSchedule.songs.map((scheduleSong, index) => {
               const fullSong = songs.find((song) => song.id === scheduleSong.id);
-
               return (
-                <div className="schedulePracticeItem" key={scheduleSong.id}>
+                <div className="schedulePracticeItem" key={displayedSchedule.id + "-" + scheduleSong.id + "-" + index}>
                   <div className="scheduleSongHeader">
                     <strong>{scheduleSong.title}</strong>
                     <span>{scheduleSong.usageType}</span>
                   </div>
-
                   <SongPracticeResources song={fullSong} showHeader={false} />
                 </div>
               );
             })}
           </div>
+        ) : (
+          <p className="homeEmpty">目前沒有排定練習曲目，可以先到曲目庫查看既有資源。</p>
+        )}
+      </section>
+
+      <section className="homeArchive" aria-label="歷年演唱影片">
+        <div>
+          <p className="eyebrow">OUR CHOIR MEMORIES</p>
+          <h2>讓歌聲與回憶繼續流傳</h2>
+          <p>每一次獻詩，都值得好好珍藏。</p>
         </div>
-      )}
-    </section>
+        {latestVideo ? (
+          <button className="homeArchivePreview" type="button" onClick={() => onNavigate("archive")}>
+            {videoThumb && <img src={videoThumb} alt="" loading="lazy" />}
+            <span>
+              <strong>{latestVideo.title}</strong>
+              <small>{latestVideo.date || "歷年影片"} · {latestVideo.eventName || "演唱紀錄"}</small>
+            </span>
+            <Play aria-hidden="true" />
+          </button>
+        ) : (
+          <button className="homeLink" type="button" onClick={() => onNavigate("archive")}>
+            查看影片 <ArrowRight aria-hidden="true" />
+          </button>
+        )}
+      </section>
+    </div>
   );
 }
 
@@ -533,6 +673,15 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
   });
 
   const [adminTab, setAdminTab] = useState("schedule");
+  const [adminQuery, setAdminQuery] = useState("");
+  const query = adminQuery.trim().toLocaleLowerCase("zh-TW");
+  const matchesQuery = (...fields) => !query || fields.some((value) =>
+    String(value ?? "").toLocaleLowerCase("zh-TW").includes(query)
+  );
+  const openAdminTab = (tab) => {
+    setAdminTab(tab);
+    setAdminQuery("");
+  };
 
   const [resourceForm, setResourceForm] = useState({
     songId: "",
@@ -1140,11 +1289,19 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
   return (
     <section className="card">
       <div className="adminHeader">
-        <h2>管理後台</h2>
-
+        <div>
+          <p className="eyebrow">ADMIN WORKSPACE</p>
+          <h2>管理後台</h2>
+          <p className="muted">集中維護聚會排程、練習曲目與歷年影片。</p>
+        </div>
         <button className="secondaryButton" type="button" onClick={handleAdminLogout}>
           登出
         </button>
+      </div>
+      <div className="adminOverview" aria-label="資料概況">
+        <span><strong>{data.schedules.length}</strong> 筆行程</span>
+        <span><strong>{data.songs.length}</strong> 首曲目</span>
+        <span><strong>{data.archiveVideos.length}</strong> 部影片</span>
       </div>
 
       <SyncStatusCard
@@ -1153,12 +1310,35 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
       />
 
       <div className="adminTabs">
-        <button className={adminTab === "schedule" ? "adminTab active" : "adminTab"} type="button" onClick={() => setAdminTab("schedule")}>排程管理</button>
-        <button className={adminTab === "songs" ? "adminTab active" : "adminTab"} type="button" onClick={() => setAdminTab("songs")}>曲目管理</button>
-        <button className={adminTab === "resources" ? "adminTab active" : "adminTab"} type="button" onClick={() => setAdminTab("resources")}>練習資源</button>
-        <button className={adminTab === "videos" ? "adminTab active" : "adminTab"} type="button" onClick={() => setAdminTab("videos")}>歷年影片</button>
-        <button className={adminTab === "settings" ? "adminTab active" : "adminTab"} type="button" onClick={() => setAdminTab("settings")}>資料設定</button>
+        <button className={adminTab === "schedule" ? "adminTab active" : "adminTab"} type="button" onClick={() => openAdminTab("schedule")}>排程管理</button>
+        <button className={adminTab === "songs" ? "adminTab active" : "adminTab"} type="button" onClick={() => openAdminTab("songs")}>曲目管理</button>
+        <button className={adminTab === "resources" ? "adminTab active" : "adminTab"} type="button" onClick={() => openAdminTab("resources")}>練習資源</button>
+        <button className={adminTab === "videos" ? "adminTab active" : "adminTab"} type="button" onClick={() => openAdminTab("videos")}>歷年影片</button>
+        <button className={adminTab === "settings" ? "adminTab active" : "adminTab"} type="button" onClick={() => openAdminTab("settings")}>資料設定</button>
       </div>
+      {adminTab !== "settings" && (
+        <div className="adminToolbar">
+          <label htmlFor="admin-search">快速搜尋</label>
+          <input
+            id="admin-search"
+            type="search"
+            autoComplete="off"
+            value={adminQuery}
+            onChange={(event) => setAdminQuery(event.target.value)}
+            placeholder={
+              adminTab === "schedule" ? "搜尋日期、聚會名稱、備註…" :
+              adminTab === "songs" ? "搜尋曲名、調性…" :
+              adminTab === "resources" ? "搜尋曲目、資源名稱…" :
+              "搜尋影片名稱、日期、場合…"
+            }
+          />
+          {query && (
+            <button type="button" className="secondaryButton" onClick={() => setAdminQuery("")}>
+              清除
+            </button>
+          )}
+        </div>
+      )}
 
             {adminTab === "schedule" && (
         <>
@@ -1245,7 +1425,9 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
         <h3>目前排程</h3>
 
         <div className="list">
-          {data.schedules.map((schedule) => {
+          {data.schedules
+            .filter((schedule) => matchesQuery(schedule.date, schedule.title, schedule.serviceType, schedule.note))
+            .map((schedule) => {
             const isScheduleEditing =
               editingSchedule && editingSchedule.id === schedule.id;
 
@@ -1496,7 +1678,9 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
         <h3>目前曲目</h3>
 
         <div className="list">
-          {data.songs.map((song) => {
+          {data.songs
+            .filter((song) => matchesQuery(song.title, song.key, song.note))
+            .map((song) => {
             const isEditing = editingSong && editingSong.id === song.id;
 
             return (
@@ -1667,7 +1851,9 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
         <h3>目前練習資源</h3>
 
         <div className="list">
-          {data.songs.map((song) => (
+          {data.songs
+            .filter((song) => matchesQuery(song.title, ...(song.resources || []).map((resource) => resource.title)))
+            .map((song) => (
             <div className="resourceGroup" key={song.id}>
               <strong>{song.title}</strong>
 
@@ -1859,7 +2045,9 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
         <h3>目前歷年影片</h3>
 
         <div className="list">
-          {data.archiveVideos.map((video) => {
+          {data.archiveVideos
+            .filter((video) => matchesQuery(video.title, video.date, video.eventName, video.description))
+            .map((video) => {
             const isEditing = editingVideo && editingVideo.id === video.id;
 
             return (
@@ -1983,6 +2171,94 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
   );
 }
 
+function AdminReadOnlyPreview({ data }) {
+  const [tab, setTab] = useState("schedules");
+  const [keyword, setKeyword] = useState("");
+  const categories = [
+    { key: "schedules", label: "行程管理", count: data.schedules.length },
+    { key: "songs", label: "曲目管理", count: data.songs.length },
+    { key: "resources", label: "練習資源", count: data.songs.reduce((sum, song) => sum + (song.resources || []).length, 0) },
+    { key: "videos", label: "歷年影片", count: data.archiveVideos.length },
+  ];
+  const rows = {
+    schedules: data.schedules.map(item => ({
+      key: item.id, title: item.title, meta: [item.date, item.serviceType].filter(Boolean).join(" · "),
+    })),
+    songs: data.songs.map(item => ({
+      key: item.id, title: item.title, meta: [item.key || "未設定調性", (item.resources || []).length + " 個資源"].join(" · "),
+    })),
+    resources: data.songs.flatMap(song => (song.resources || []).map(res => ({
+      key: res.id, title: res.title || "練習資源", meta: [song.title, res.voicePart || "全體"].join(" · "),
+    }))),
+    videos: data.archiveVideos.map(item => ({
+      key: item.id, title: item.title, meta: [item.date, item.eventName].filter(Boolean).join(" · "),
+    })),
+  };
+  const query = keyword.trim().toLocaleLowerCase("zh-TW");
+  const visible = (rows[tab] || []).filter(item =>
+    !query || (item.title + " " + item.meta).toLocaleLowerCase("zh-TW").includes(query)
+  );
+  return (
+    <section className="card adminDesignPreview">
+      <div className="adminHeader">
+        <div>
+          <p className="eyebrow">ADMIN WORKSPACE · DESIGN PREVIEW</p>
+          <h2>管理後台</h2>
+          <p className="muted">工作台視覺示意，使用真實的公開資料；此預覽禁止任何寫入操作。</p>
+        </div>
+        <span className="adminReadOnlyTag">唯讀預覽</span>
+      </div>
+      <div className="adminOverview">
+        <span><strong>{data.schedules.length}</strong> 筆行程</span>
+        <span><strong>{data.songs.length}</strong> 首曲目</span>
+        <span><strong>{data.archiveVideos.length}</strong> 部影片</span>
+      </div>
+      <div className="adminTabs">
+        {categories.map(cat => (
+          <button
+            type="button"
+            key={cat.key}
+            className={tab === cat.key ? "adminTab active" : "adminTab"}
+            onClick={() => { setTab(cat.key); setKeyword(""); }}
+          >{cat.label} <small>({cat.count})</small></button>
+        ))}
+      </div>
+      <div className="adminToolbar">
+        <label htmlFor="design-search">快速搜尋</label>
+        <input
+          id="design-search"
+          type="search"
+          autoComplete="off"
+          placeholder="輸入關鍵字搜尋資料…"
+          value={keyword}
+          onChange={event => setKeyword(event.target.value)}
+        />
+      </div>
+      <div className="adminDesignList" aria-live="polite">
+        <div className="adminDesignListHeading">
+          <h3>{categories.find(item => item.key === tab)?.label}</h3>
+          <span>共 {visible.length} 筆</span>
+        </div>
+        {visible.slice(0, 14).map(item => (
+          <div key={item.key} className="adminDesignListItem">
+            <div>
+              <strong>{item.title}</strong>
+              <p className="muted">{item.meta || "尚無補充資料"}</p>
+            </div>
+            <span className="adminDesignEdit">查看資料</span>
+          </div>
+        ))}
+        {visible.length === 0 && <p className="homeEmpty">沒有符合條件的資料。</p>}
+        {visible.length > 14 && <p className="muted">預覽僅顯示前 14 筆，正式管理版會保留完整清單。</p>}
+      </div>
+      <p className="adminDesignDisclaimer">
+        <BookOpen aria-hidden="true" />
+        這是外觀與資訊排列預覽。新增、編輯及刪除按鈕均未啟用；正式後台仍在原網站正常運作。
+      </p>
+    </section>
+  );
+}
+
 export default function App() {
   const [activePage, setActivePage] = useState("home");
   const [data, setData] = useState(emptyData);
@@ -2092,7 +2368,7 @@ export default function App() {
 
   const renderPage = () => {
     if (activePage === "home") {
-      return <HomePage schedules={data.schedules} songs={data.songs} />;
+      return <HomePage schedules={data.schedules} songs={data.songs} archiveVideos={data.archiveVideos} onNavigate={setActivePage} />;
     }
 
     if (activePage === "calendar") {
@@ -2105,6 +2381,10 @@ export default function App() {
 
     if (activePage === "archive") {
       return <ArchivePage archiveVideos={data.archiveVideos} />;
+    }
+
+    if (activePage === "admin" && IS_DESIGN_PREVIEW) {
+      return <AdminReadOnlyPreview data={data} />;
     }
 
     if (activePage === "admin") {
@@ -2120,7 +2400,7 @@ export default function App() {
       );
     }
 
-    return <HomePage schedules={data.schedules} />;
+    return <HomePage schedules={data.schedules} songs={data.songs} archiveVideos={data.archiveVideos} onNavigate={setActivePage} />;
   };
 
   if (isDataLoading) {
@@ -2136,32 +2416,58 @@ export default function App() {
   }
 
   return (
-    <div className="app">
-      <header className="hero">
+    <div className={activePage === "home" ? "app homeApp" : "app"}>
+      {IS_DESIGN_PREVIEW && (
+        <div className="designPreviewNotice" role="status">
+          <span>設計預覽 · 唯讀展示，不會修改正式資料</span>
+          <a href="https://hwh0410.github.io/NanxiChurchChoir/">返回正式網站</a>
+        </div>
+      )}
+      <header
+        className={activePage === "home" ? "hero heroPhotographic" : "hero heroCompact"}
+        style={activePage === "home" ? { "--hero-art": `url("${import.meta.env.BASE_URL}media/church-hero.jpg?v=hd-20261022")` } : undefined}
+      >
+        {activePage === "home" && <img className="heroFlowers" src={`${import.meta.env.BASE_URL}media/flowers-right.png?v=hd-20261022`} alt="" aria-hidden="true" />}
         <div className="heroOverlay">
-          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="教會Logo" className="heroLogo" />
-
-          <h1>楠西教會聖歌隊時程表&自主練習平台</h1>
-
+          <div className="heroBrand">
+            <img src={`${import.meta.env.BASE_URL}logo.png`} alt="楠西教會標誌" className="heroLogo" />
+            <span className="heroBrandName">
+              <strong>楠西教會聖歌隊</strong>
+              <small>NANXI CHURCH CHOIR</small>
+            </span>
+          </div>
+          <p className="heroEyebrow">SING HIS LOVE · SHARE HIS GRACE</p>
+          <h1>楠西教會聖歌隊<br />時程表與自主練習平台</h1>
           <p className="heroText">
-            整合每週曲目、練習資源、樂譜與歷年演唱影片。
+            每週獻詩曲目、各聲部練習資源、樂譜與歷年演唱紀錄。
+            讓我們在詩歌中相聚，也在練習中成長。
           </p>
+          <div className="heroAccent" aria-hidden="true" />
         </div>
       </header>
 
       <nav className="navbar">
-        {pages.map((page) => (
-          <button
-            key={page.key}
-            className={activePage === page.key ? "navButton active" : "navButton"}
-            onClick={() => setActivePage(page.key)}
-          >
-            {page.label}
-          </button>
-        ))}
+        {pages.map((page) => {
+          const Icon = page.icon;
+          return (
+            <button
+              key={page.key}
+              type="button"
+              className={activePage === page.key ? "navButton active" : "navButton"}
+              aria-current={activePage === page.key ? "page" : undefined}
+              onClick={() => setActivePage(page.key)}
+            >
+              <Icon aria-hidden="true" />
+              {page.label}
+            </button>
+          );
+        })}
       </nav>
 
-      <main className="main">{renderPage()}</main>
+      <main className="main">
+        {activePage === "home" && <img className="pageFlowersLeft" src={`${import.meta.env.BASE_URL}media/flowers-left.png?v=hd-20261022`} alt="" aria-hidden="true" />}
+        {renderPage()}
+      </main>
     </div>
   );
 }
