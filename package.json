@@ -6,7 +6,6 @@
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.105.3",
     "@vitejs/plugin-react": "latest",
     "lucide-react": "latest",
     "react": "latest",
