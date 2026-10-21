@@ -642,7 +642,7 @@ function CalendarPage({ schedules, songs }) {
                         <span className="choirCalendarEventTitle">{event.title}</span>
                         {scheduledSongTitles(event).length > 0 && (
                           <span className="choirCalendarSongLine" title={scheduledSongsLabel(event)}>
-                            <Music2 aria-hidden="true" />{scheduledSongsLabel(event)}
+                            <Music2 aria-hidden="true" /><span className="choirCalendarSongText">{scheduledSongsLabel(event)}</span>
                           </span>
                         )}
                       </button>
@@ -675,7 +675,7 @@ function CalendarPage({ schedules, songs }) {
                 <strong>{event.title}</strong>
                 <small>{event.serviceType || "聚會"} · {(event.songs || []).length} 首曲目</small>
                 {scheduledSongTitles(event).length > 0 && (
-                  <span className="choirCalendarAgendaSongs"><Music2 aria-hidden="true" />{scheduledSongsLabel(event)}</span>
+                  <span className="choirCalendarAgendaSongs"><Music2 aria-hidden="true" /><span className="choirCalendarSongText">{scheduledSongsLabel(event)}</span></span>
                 )}
               </span>
               <ChevronRight aria-hidden="true" />
@@ -714,7 +714,7 @@ function CalendarPage({ schedules, songs }) {
                   <span><strong>{event.title}</strong>
                     <small>{event.serviceType || "聚會"} · {(event.songs || []).length} 首曲目</small>
                     {scheduledSongTitles(event).length > 0 && (
-                      <span className="choirCalendarSelectedSongs"><Music2 aria-hidden="true" />{scheduledSongsLabel(event)}</span>
+                      <span className="choirCalendarSelectedSongs"><Music2 aria-hidden="true" /><span className="choirCalendarSongText">{scheduledSongsLabel(event)}</span></span>
                     )}
                   </span>
                   <span className="choirCalendarSelectedLink">查看內容 <ArrowRight aria-hidden="true" /></span>
