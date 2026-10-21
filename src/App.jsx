@@ -2419,7 +2419,7 @@ export default function App() {
     <div className={activePage === "home" ? "app homeApp" : "app"}>
       {IS_DESIGN_PREVIEW && (
         <div className="designPreviewNotice" role="status">
-          <span>設計預覽 v1 · 目前為唯讀展示，不會修改正式資料</span>
+          <span>設計預覽 · 唯讀展示，不會修改正式資料</span>
           <a href="https://hwh0410.github.io/NanxiChurchChoir/">返回正式網站</a>
         </div>
       )}
