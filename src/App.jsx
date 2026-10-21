@@ -3,7 +3,12 @@ import { getYoutubeEmbedUrl } from "./services/youtube";
 import { getGoogleDrivePreviewUrl } from "./services/googleDrive";
 import { getYoutubeThumbnail } from "./services/youtube";
 import { useEffect, useState } from "react";
+import {
+  House, CalendarDays, Music2, Film, Settings2,
+  ArrowRight, BookOpen, Play, Clock3
+} from "lucide-react";
 import "./styles.css";
+import "./theme-v1.css";
 import {
   emptyData,
   loadDataWithStatus,
@@ -13,11 +18,11 @@ import {
 } from "./services/cloudDb";
 
 const pages = [
-  { key: "home", label: "首頁" },
-  { key: "calendar", label: "日曆" },
-  { key: "songs", label: "曲目" },
-  { key: "archive", label: "歷年影片" },
-  { key: "admin", label: "管理" },
+  { key: "home", label: "首頁", icon: House },
+  { key: "calendar", label: "日曆", icon: CalendarDays },
+  { key: "songs", label: "曲目", icon: Music2 },
+  { key: "archive", label: "歷年影片", icon: Film },
+  { key: "admin", label: "管理", icon: Settings2 },
 ];
 
 function formatSyncTime(value) {
@@ -247,53 +252,151 @@ function SongPracticeResources({ song, showHeader = true }) {
   );
 }
 
-function HomePage({ schedules, songs }) {
-  const today = new Date().toISOString().slice(0, 10);
-
-  const upcomingSchedules = schedules
-    .filter((s) => s.date >= today)
-    .sort((a, b) => a.date.localeCompare(b.date));
-
-  const nextSchedule =
-    upcomingSchedules.length > 0
-      ? upcomingSchedules[0]
-      : schedules.length > 0
-      ? schedules[schedules.length - 1]
-      : null;
+function HomePage({ schedules, songs, archiveVideos, onNavigate }) {
+  // Schedule dates are local calendar dates; use Taiwan's date, not UTC.
+  const today = new Date(Date.now() + 8 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+  const orderedSchedules = [...schedules].sort((a, b) =>
+    a.date.localeCompare(b.date)
+  );
+  const nextSchedule = orderedSchedules.find((schedule) => schedule.date >= today);
+  const displayedSchedule = nextSchedule || orderedSchedules.at(-1) || null;
+  const mainSong = displayedSchedule?.songs?.[0] || null;
+  const fullMainSong = songs.find((song) => song.id === mainSong?.id);
+  const latestVideo = [...archiveVideos]
+    .sort((a, b) => (b.date || "").localeCompare(a.date || ""))[0] || null;
+  const videoThumb = latestVideo
+    ? getYoutubeThumbnail(latestVideo.youtubeUrl)
+    : null;
 
   return (
-    <section className="card">
-      <h2>本週曲目</h2>
-
-      {!nextSchedule ? (
-        <p>目前尚未建立排程。</p>
-      ) : (
+    <div className="homePage">
+      <div className="homeWelcome">
         <div>
-          <p className="muted">
-            {nextSchedule.date}｜{nextSchedule.serviceType}｜{nextSchedule.title}
+          <p className="eyebrow">WORSHIP · LEARN · TOGETHER</p>
+          <h2>讓每一次練習，都更靠近彼此。</h2>
+          <p>從本週獻詩開始，快速找到行程、樂譜和各聲部的練習資源。</p>
+        </div>
+        <button className="homeLink" type="button" onClick={() => onNavigate("calendar")}>
+          瀏覽行程 <ArrowRight aria-hidden="true" />
+        </button>
+      </div>
+
+      <div className="homeHighlights">
+        <article className="homeHighlight">
+          <div className="homeCardTop">
+            <span className="homeCardIcon"><CalendarDays aria-hidden="true" /></span>
+            近期聚會
+          </div>
+          <h3 className="homeCardTitle">
+            {nextSchedule?.title || (displayedSchedule ? "目前沒有未來行程" : "尚未安排聚會")}
+          </h3>
+          <p className="homeCardMeta">
+            {nextSchedule
+              ? [nextSchedule.date, nextSchedule.serviceType].filter(Boolean).join(" · ")
+              : displayedSchedule
+                ? "可以查看先前的聚會紀錄"
+                : "待管理員新增行程"}
           </p>
+          <button className="homeCardAction" type="button" onClick={() => onNavigate("calendar")}>
+            查看行程 <ArrowRight aria-hidden="true" />
+          </button>
+        </article>
 
-          <h3>{nextSchedule.note || "本週安排"}</h3>
+        <article className="homeHighlight">
+          <div className="homeCardTop">
+            <span className="homeCardIcon"><Music2 aria-hidden="true" /></span>
+            最近安排曲目
+          </div>
+          <h3 className="homeCardTitle">{mainSong?.title || "等待新曲目"}</h3>
+          <p className="homeCardMeta">
+            {mainSong
+              ? (nextSchedule ? nextSchedule.date + " · " : "先前安排 · ") + (mainSong.usageType || "獻詩")
+              : "曲目公布後會顯示在這裡"}
+          </p>
+          <button className="homeCardAction" type="button" onClick={() => onNavigate("songs")}>
+            瀏覽曲目庫 <ArrowRight aria-hidden="true" />
+          </button>
+        </article>
 
+        <article className="homeHighlight">
+          <div className="homeCardTop">
+            <span className="homeCardIcon"><BookOpen aria-hidden="true" /></span>
+            自主練習
+          </div>
+          <h3 className="homeCardTitle">
+            {fullMainSong?.resources?.length
+              ? fullMainSong.resources.length + " 個練習資源"
+              : "一起預備練習"}
+          </h3>
+          <p className="homeCardMeta">
+            {fullMainSong?.resources?.length
+              ? "樂譜、示範影片及各聲部練習"
+              : "從曲目資料庫尋找現有樂譜和音檔"}
+          </p>
+          <button className="homeCardAction" type="button" onClick={() => onNavigate("songs")}>
+            開始練習 <ArrowRight aria-hidden="true" />
+          </button>
+        </article>
+      </div>
+
+      <section className="card homePractice" aria-labelledby="home-practice-title">
+        <div className="homeSectionTitle">
+          <div>
+            <h2 id="home-practice-title">{nextSchedule ? "近期獻詩與練習" : "詩班曲目與練習"}</h2>
+            <p>
+              {displayedSchedule
+                ? [displayedSchedule.date, displayedSchedule.title].filter(Boolean).join(" · ")
+                : "所有曲目都可以在曲目資料庫查詢"}
+            </p>
+          </div>
+          <button className="homeLink" type="button" onClick={() => onNavigate("songs")}>
+            所有曲目 <ArrowRight aria-hidden="true" />
+          </button>
+        </div>
+        {displayedSchedule?.songs?.length ? (
           <div className="practiceList">
-            {(nextSchedule.songs || []).map((scheduleSong) => {
+            {displayedSchedule.songs.map((scheduleSong, index) => {
               const fullSong = songs.find((song) => song.id === scheduleSong.id);
-
               return (
-                <div className="schedulePracticeItem" key={scheduleSong.id}>
+                <div className="schedulePracticeItem" key={displayedSchedule.id + "-" + scheduleSong.id + "-" + index}>
                   <div className="scheduleSongHeader">
                     <strong>{scheduleSong.title}</strong>
                     <span>{scheduleSong.usageType}</span>
                   </div>
-
                   <SongPracticeResources song={fullSong} showHeader={false} />
                 </div>
               );
             })}
           </div>
+        ) : (
+          <p className="homeEmpty">目前沒有排定練習曲目，可以先到曲目庫查看既有資源。</p>
+        )}
+      </section>
+
+      <section className="homeArchive" aria-label="歷年演唱影片">
+        <div>
+          <p className="eyebrow">OUR CHOIR MEMORIES</p>
+          <h2>讓歌聲與回憶繼續流傳</h2>
+          <p>每一次獻詩，都值得好好珍藏。</p>
         </div>
-      )}
-    </section>
+        {latestVideo ? (
+          <button className="homeArchivePreview" type="button" onClick={() => onNavigate("archive")}>
+            {videoThumb && <img src={videoThumb} alt="" loading="lazy" />}
+            <span>
+              <strong>{latestVideo.title}</strong>
+              <small>{latestVideo.date || "歷年影片"} · {latestVideo.eventName || "演唱紀錄"}</small>
+            </span>
+            <Play aria-hidden="true" />
+          </button>
+        ) : (
+          <button className="homeLink" type="button" onClick={() => onNavigate("archive")}>
+            查看影片 <ArrowRight aria-hidden="true" />
+          </button>
+        )}
+      </section>
+    </div>
   );
 }
 
@@ -2092,7 +2195,7 @@ export default function App() {
 
   const renderPage = () => {
     if (activePage === "home") {
-      return <HomePage schedules={data.schedules} songs={data.songs} />;
+      return <HomePage schedules={data.schedules} songs={data.songs} archiveVideos={data.archiveVideos} onNavigate={setActivePage} />;
     }
 
     if (activePage === "calendar") {
@@ -2120,7 +2223,7 @@ export default function App() {
       );
     }
 
-    return <HomePage schedules={data.schedules} />;
+    return <HomePage schedules={data.schedules} songs={data.songs} archiveVideos={data.archiveVideos} onNavigate={setActivePage} />;
   };
 
   if (isDataLoading) {
@@ -2137,28 +2240,41 @@ export default function App() {
 
   return (
     <div className="app">
-      <header className="hero">
+      <header className={activePage === "home" ? "hero" : "hero heroCompact"}>
         <div className="heroOverlay">
-          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="教會Logo" className="heroLogo" />
-
-          <h1>楠西教會聖歌隊時程表&自主練習平台</h1>
-
+          <div className="heroBrand">
+            <img src={`${import.meta.env.BASE_URL}logo.png`} alt="楠西教會標誌" className="heroLogo" />
+            <span className="heroBrandName">
+              <strong>楠西教會聖歌隊</strong>
+              <small>NANXI CHURCH CHOIR</small>
+            </span>
+          </div>
+          <p className="heroEyebrow">SING TOGETHER · GROW IN FAITH</p>
+          <h1>時程表與自主練習平台</h1>
           <p className="heroText">
-            整合每週曲目、練習資源、樂譜與歷年演唱影片。
+            每週獻詩曲目、各聲部練習資源、樂譜與歷年演唱紀錄。
+            讓我們在詩歌中相聚，也在練習中成長。
           </p>
+          <div className="heroAccent" aria-hidden="true" />
         </div>
       </header>
 
       <nav className="navbar">
-        {pages.map((page) => (
-          <button
-            key={page.key}
-            className={activePage === page.key ? "navButton active" : "navButton"}
-            onClick={() => setActivePage(page.key)}
-          >
-            {page.label}
-          </button>
-        ))}
+        {pages.map((page) => {
+          const Icon = page.icon;
+          return (
+            <button
+              key={page.key}
+              type="button"
+              className={activePage === page.key ? "navButton active" : "navButton"}
+              aria-current={activePage === page.key ? "page" : undefined}
+              onClick={() => setActivePage(page.key)}
+            >
+              <Icon aria-hidden="true" />
+              {page.label}
+            </button>
+          );
+        })}
       </nav>
 
       <main className="main">{renderPage()}</main>
