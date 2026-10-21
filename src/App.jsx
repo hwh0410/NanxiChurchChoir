@@ -1,4 +1,4 @@
-import { supabase } from "./services/supabaseClient";
+import { renderGoogleSignIn, authorizeGoogleCredential, resumeGoogleAdmin, clearGoogleCredential } from "./services/googleAuth";
 import { getYoutubeEmbedUrl } from "./services/youtube";
 import { getGoogleDrivePreviewUrl } from "./services/googleDrive";
 import { getYoutubeThumbnail } from "./services/youtube";
@@ -10,7 +10,7 @@ import {
   saveData,
   resetData,
   getCloudStatus,
-} from "./services/supabaseDb";
+} from "./services/cloudDb";
 
 const pages = [
   { key: "home", label: "首頁" },
@@ -523,8 +523,7 @@ function ArchiveVideoCard({ video }) {
 function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefreshSyncStatus }) {
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
-  const [adminEmail, setAdminEmail] = useState("");
-  const [adminPassword, setAdminPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
 
   const [songForm, setSongForm] = useState({
     title: "",
@@ -568,52 +567,33 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
   const [editingVideo, setEditingVideo] = useState(null);
 
   useEffect(() => {
-    let isMounted = true;
-
-    const checkSession = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-
-      if (!isMounted) return;
-
-      setIsAdminLoggedIn(Boolean(sessionData.session));
+    let active = true;
+    resumeGoogleAdmin().then((allowed) => {
+      if (!active) return;
+      setIsAdminLoggedIn(allowed);
       setIsAuthChecking(false);
-    };
-
-    checkSession();
-
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setIsAdminLoggedIn(Boolean(session));
-        setIsAuthChecking(false);
-      }
-    );
-
-    return () => {
-      isMounted = false;
-      listener.subscription.unsubscribe();
-    };
+    });
+    return () => { active = false; };
   }, []);
 
-  const handleAdminLogin = async (event) => {
-    event.preventDefault();
+  useEffect(() => {
+    if (isAuthChecking || isAdminLoggedIn) return;
+    const target = document.getElementById("nanxi-google-login");
+    if (!target) return;
+    renderGoogleSignIn(target, async (credential) => {
+      try {
+        setLoginError("");
+        await authorizeGoogleCredential(credential);
+        setIsAdminLoggedIn(true);
+      } catch (error) {
+        clearGoogleCredential();
+        setLoginError(error.message);
+      }
+    }).catch(error => setLoginError(error.message));
+  }, [isAuthChecking, isAdminLoggedIn]);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email: adminEmail,
-      password: adminPassword,
-    });
-
-    if (error) {
-      alert(`登入失敗：${error.message}`);
-      return;
-    }
-
-    setIsAdminLoggedIn(true);
-    setAdminEmail("");
-    setAdminPassword("");
-  };
-
-  const handleAdminLogout = async () => {
-    await supabase.auth.signOut();
+  const handleAdminLogout = () => {
+    clearGoogleCredential();
     setIsAdminLoggedIn(false);
   };
 
@@ -630,27 +610,10 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
     return (
       <section className="card loginCard">
         <h2>管理員登入</h2>
-        <p className="muted">請使用管理員 Email 與密碼登入後台。</p>
+        <p className="muted">請使用已授權的 Google 帳號登入後台。</p>
 
-        <form className="loginForm" onSubmit={handleAdminLogin}>
-          <input
-            type="email"
-            value={adminEmail}
-            onChange={(e) => setAdminEmail(e.target.value)}
-            placeholder="請輸入管理員 Email"
-          />
-
-          <input
-            type="password"
-            value={adminPassword}
-            onChange={(e) => setAdminPassword(e.target.value)}
-            placeholder="請輸入管理員密碼"
-          />
-
-          <button className="primaryButton" type="submit">
-            登入
-          </button>
-        </form>
+        <div id="nanxi-google-login" style={{ display: "flex", justifyContent: "center" }} />
+        {loginError && <p role="alert" className="muted">{loginError}</p>}
       </section>
     );
   }
