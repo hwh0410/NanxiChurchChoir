@@ -5,7 +5,7 @@ import { getYoutubeThumbnail } from "./services/youtube";
 import { useEffect, useState } from "react";
 import {
   House, CalendarDays, Music2, Film, Settings2,
-  ArrowRight, BookOpen, Play, Clock3
+  ArrowRight, BookOpen, Play
 } from "lucide-react";
 import "./styles.css";
 import "./theme-v1.css";
@@ -636,6 +636,15 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
   });
 
   const [adminTab, setAdminTab] = useState("schedule");
+  const [adminQuery, setAdminQuery] = useState("");
+  const query = adminQuery.trim().toLocaleLowerCase("zh-TW");
+  const matchesQuery = (...fields) => !query || fields.some((value) =>
+    String(value ?? "").toLocaleLowerCase("zh-TW").includes(query)
+  );
+  const openAdminTab = (tab) => {
+    setAdminTab(tab);
+    setAdminQuery("");
+  };
 
   const [resourceForm, setResourceForm] = useState({
     songId: "",
@@ -1243,11 +1252,19 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
   return (
     <section className="card">
       <div className="adminHeader">
-        <h2>管理後台</h2>
-
+        <div>
+          <p className="eyebrow">ADMIN WORKSPACE</p>
+          <h2>管理後台</h2>
+          <p className="muted">集中維護聚會排程、練習曲目與歷年影片。</p>
+        </div>
         <button className="secondaryButton" type="button" onClick={handleAdminLogout}>
           登出
         </button>
+      </div>
+      <div className="adminOverview" aria-label="資料概況">
+        <span><strong>{data.schedules.length}</strong> 筆行程</span>
+        <span><strong>{data.songs.length}</strong> 首曲目</span>
+        <span><strong>{data.archiveVideos.length}</strong> 部影片</span>
       </div>
 
       <SyncStatusCard
@@ -1256,12 +1273,35 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
       />
 
       <div className="adminTabs">
-        <button className={adminTab === "schedule" ? "adminTab active" : "adminTab"} type="button" onClick={() => setAdminTab("schedule")}>排程管理</button>
-        <button className={adminTab === "songs" ? "adminTab active" : "adminTab"} type="button" onClick={() => setAdminTab("songs")}>曲目管理</button>
-        <button className={adminTab === "resources" ? "adminTab active" : "adminTab"} type="button" onClick={() => setAdminTab("resources")}>練習資源</button>
-        <button className={adminTab === "videos" ? "adminTab active" : "adminTab"} type="button" onClick={() => setAdminTab("videos")}>歷年影片</button>
-        <button className={adminTab === "settings" ? "adminTab active" : "adminTab"} type="button" onClick={() => setAdminTab("settings")}>資料設定</button>
+        <button className={adminTab === "schedule" ? "adminTab active" : "adminTab"} type="button" onClick={() => openAdminTab("schedule")}>排程管理</button>
+        <button className={adminTab === "songs" ? "adminTab active" : "adminTab"} type="button" onClick={() => openAdminTab("songs")}>曲目管理</button>
+        <button className={adminTab === "resources" ? "adminTab active" : "adminTab"} type="button" onClick={() => openAdminTab("resources")}>練習資源</button>
+        <button className={adminTab === "videos" ? "adminTab active" : "adminTab"} type="button" onClick={() => openAdminTab("videos")}>歷年影片</button>
+        <button className={adminTab === "settings" ? "adminTab active" : "adminTab"} type="button" onClick={() => openAdminTab("settings")}>資料設定</button>
       </div>
+      {adminTab !== "settings" && (
+        <div className="adminToolbar">
+          <label htmlFor="admin-search">快速搜尋</label>
+          <input
+            id="admin-search"
+            type="search"
+            autoComplete="off"
+            value={adminQuery}
+            onChange={(event) => setAdminQuery(event.target.value)}
+            placeholder={
+              adminTab === "schedule" ? "搜尋日期、聚會名稱、備註…" :
+              adminTab === "songs" ? "搜尋曲名、調性…" :
+              adminTab === "resources" ? "搜尋曲目、資源名稱…" :
+              "搜尋影片名稱、日期、場合…"
+            }
+          />
+          {query && (
+            <button type="button" className="secondaryButton" onClick={() => setAdminQuery("")}>
+              清除
+            </button>
+          )}
+        </div>
+      )}
 
             {adminTab === "schedule" && (
         <>
@@ -1348,7 +1388,9 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
         <h3>目前排程</h3>
 
         <div className="list">
-          {data.schedules.map((schedule) => {
+          {data.schedules
+            .filter((schedule) => matchesQuery(schedule.date, schedule.title, schedule.serviceType, schedule.note))
+            .map((schedule) => {
             const isScheduleEditing =
               editingSchedule && editingSchedule.id === schedule.id;
 
@@ -1599,7 +1641,9 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
         <h3>目前曲目</h3>
 
         <div className="list">
-          {data.songs.map((song) => {
+          {data.songs
+            .filter((song) => matchesQuery(song.title, song.key, song.note))
+            .map((song) => {
             const isEditing = editingSong && editingSong.id === song.id;
 
             return (
@@ -1770,7 +1814,9 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
         <h3>目前練習資源</h3>
 
         <div className="list">
-          {data.songs.map((song) => (
+          {data.songs
+            .filter((song) => matchesQuery(song.title, ...(song.resources || []).map((resource) => resource.title)))
+            .map((song) => (
             <div className="resourceGroup" key={song.id}>
               <strong>{song.title}</strong>
 
@@ -1962,7 +2008,9 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
         <h3>目前歷年影片</h3>
 
         <div className="list">
-          {data.archiveVideos.map((video) => {
+          {data.archiveVideos
+            .filter((video) => matchesQuery(video.title, video.date, video.eventName, video.description))
+            .map((video) => {
             const isEditing = editingVideo && editingVideo.id === video.id;
 
             return (
