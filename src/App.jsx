@@ -368,7 +368,7 @@ function HomePage({ schedules, songs, archiveVideos, onNavigate }) {
 
       <section
         className="homeScripture"
-        style={{ "--landscape-art": `url("${import.meta.env.BASE_URL}media/hills.jpg")` }}
+        style={{ "--landscape-art": `url("${import.meta.env.BASE_URL}media/hills.jpg?v=hd-20261022")` }}
         aria-label="詩班的心聲"
       >
         <div className="homeScriptureInner">
@@ -2425,9 +2425,9 @@ export default function App() {
       )}
       <header
         className={activePage === "home" ? "hero heroPhotographic" : "hero heroCompact"}
-        style={activePage === "home" ? { "--hero-art": `url("${import.meta.env.BASE_URL}media/church-hero.jpg")` } : undefined}
+        style={activePage === "home" ? { "--hero-art": `url("${import.meta.env.BASE_URL}media/church-hero.jpg?v=hd-20261022")` } : undefined}
       >
-        {activePage === "home" && <img className="heroFlowers" src={`${import.meta.env.BASE_URL}media/flowers-right.png`} alt="" aria-hidden="true" />}
+        {activePage === "home" && <img className="heroFlowers" src={`${import.meta.env.BASE_URL}media/flowers-right.png?v=hd-20261022`} alt="" aria-hidden="true" />}
         <div className="heroOverlay">
           <div className="heroBrand">
             <img src={`${import.meta.env.BASE_URL}logo.png`} alt="楠西教會標誌" className="heroLogo" />
@@ -2465,7 +2465,7 @@ export default function App() {
       </nav>
 
       <main className="main">
-        {activePage === "home" && <img className="pageFlowersLeft" src={`${import.meta.env.BASE_URL}media/flowers-left.png`} alt="" aria-hidden="true" />}
+        {activePage === "home" && <img className="pageFlowersLeft" src={`${import.meta.env.BASE_URL}media/flowers-left.png?v=hd-20261022`} alt="" aria-hidden="true" />}
         {renderPage()}
       </main>
     </div>
