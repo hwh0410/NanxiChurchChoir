@@ -17,6 +17,8 @@ import {
   getCloudStatus,
 } from "./services/cloudDb";
 
+const IS_DESIGN_PREVIEW = import.meta.env.VITE_READ_ONLY_PREVIEW === "true";
+
 const pages = [
   { key: "home", label: "首頁", icon: House },
   { key: "calendar", label: "日曆", icon: CalendarDays },
@@ -2134,6 +2136,94 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
   );
 }
 
+function AdminReadOnlyPreview({ data }) {
+  const [tab, setTab] = useState("schedules");
+  const [keyword, setKeyword] = useState("");
+  const categories = [
+    { key: "schedules", label: "行程管理", count: data.schedules.length },
+    { key: "songs", label: "曲目管理", count: data.songs.length },
+    { key: "resources", label: "練習資源", count: data.songs.reduce((sum, song) => sum + (song.resources || []).length, 0) },
+    { key: "videos", label: "歷年影片", count: data.archiveVideos.length },
+  ];
+  const rows = {
+    schedules: data.schedules.map(item => ({
+      key: item.id, title: item.title, meta: [item.date, item.serviceType].filter(Boolean).join(" · "),
+    })),
+    songs: data.songs.map(item => ({
+      key: item.id, title: item.title, meta: [item.key || "未設定調性", (item.resources || []).length + " 個資源"].join(" · "),
+    })),
+    resources: data.songs.flatMap(song => (song.resources || []).map(res => ({
+      key: res.id, title: res.title || "練習資源", meta: [song.title, res.voicePart || "全體"].join(" · "),
+    }))),
+    videos: data.archiveVideos.map(item => ({
+      key: item.id, title: item.title, meta: [item.date, item.eventName].filter(Boolean).join(" · "),
+    })),
+  };
+  const query = keyword.trim().toLocaleLowerCase("zh-TW");
+  const visible = (rows[tab] || []).filter(item =>
+    !query || (item.title + " " + item.meta).toLocaleLowerCase("zh-TW").includes(query)
+  );
+  return (
+    <section className="card adminDesignPreview">
+      <div className="adminHeader">
+        <div>
+          <p className="eyebrow">ADMIN WORKSPACE · DESIGN PREVIEW</p>
+          <h2>管理後台</h2>
+          <p className="muted">工作台視覺示意，使用真實的公開資料；此預覽禁止任何寫入操作。</p>
+        </div>
+        <span className="adminReadOnlyTag">唯讀預覽</span>
+      </div>
+      <div className="adminOverview">
+        <span><strong>{data.schedules.length}</strong> 筆行程</span>
+        <span><strong>{data.songs.length}</strong> 首曲目</span>
+        <span><strong>{data.archiveVideos.length}</strong> 部影片</span>
+      </div>
+      <div className="adminTabs">
+        {categories.map(cat => (
+          <button
+            type="button"
+            key={cat.key}
+            className={tab === cat.key ? "adminTab active" : "adminTab"}
+            onClick={() => { setTab(cat.key); setKeyword(""); }}
+          >{cat.label} <small>({cat.count})</small></button>
+        ))}
+      </div>
+      <div className="adminToolbar">
+        <label htmlFor="design-search">快速搜尋</label>
+        <input
+          id="design-search"
+          type="search"
+          autoComplete="off"
+          placeholder="輸入關鍵字搜尋資料…"
+          value={keyword}
+          onChange={event => setKeyword(event.target.value)}
+        />
+      </div>
+      <div className="adminDesignList" aria-live="polite">
+        <div className="adminDesignListHeading">
+          <h3>{categories.find(item => item.key === tab)?.label}</h3>
+          <span>共 {visible.length} 筆</span>
+        </div>
+        {visible.slice(0, 14).map(item => (
+          <div key={item.key} className="adminDesignListItem">
+            <div>
+              <strong>{item.title}</strong>
+              <p className="muted">{item.meta || "尚無補充資料"}</p>
+            </div>
+            <span className="adminDesignEdit">查看資料</span>
+          </div>
+        ))}
+        {visible.length === 0 && <p className="homeEmpty">沒有符合條件的資料。</p>}
+        {visible.length > 14 && <p className="muted">預覽僅顯示前 14 筆，正式管理版會保留完整清單。</p>}
+      </div>
+      <p className="adminDesignDisclaimer">
+        <BookOpen aria-hidden="true" />
+        這是外觀與資訊排列預覽。新增、編輯及刪除按鈕均未啟用；正式後台仍在原網站正常運作。
+      </p>
+    </section>
+  );
+}
+
 export default function App() {
   const [activePage, setActivePage] = useState("home");
   const [data, setData] = useState(emptyData);
@@ -2258,6 +2348,10 @@ export default function App() {
       return <ArchivePage archiveVideos={data.archiveVideos} />;
     }
 
+    if (activePage === "admin" && IS_DESIGN_PREVIEW) {
+      return <AdminReadOnlyPreview data={data} />;
+    }
+
     if (activePage === "admin") {
       return (
         <AdminPage
@@ -2288,6 +2382,12 @@ export default function App() {
 
   return (
     <div className="app">
+      {IS_DESIGN_PREVIEW && (
+        <div className="designPreviewNotice" role="status">
+          <span>設計預覽 v1 · 目前為唯讀展示，不會修改正式資料</span>
+          <a href="https://hwh0410.github.io/NanxiChurchChoir/">返回正式網站</a>
+        </div>
+      )}
       <header className={activePage === "home" ? "hero" : "hero heroCompact"}>
         <div className="heroOverlay">
           <div className="heroBrand">
