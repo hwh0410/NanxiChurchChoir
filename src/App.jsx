@@ -11,6 +11,7 @@ import "./styles.css";
 import "./theme-v1.css";
 import "./calendar-v1.css";
 import "./admin-phase2.css";
+import { validateScheduleDraft, makeScheduleFromDraft, cloneScheduleDraft, insertSchedule } from "./utils/adminSchedulePlanner.mjs";
 import {
   emptyData,
   loadDataWithStatus,
@@ -1244,55 +1245,26 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
   };
 
   const copyScheduleToBuilder = (schedule) => {
-    setScheduleForm({
-      date: "",
-      title: schedule.title,
-      serviceType: schedule.serviceType || "主日",
-      note: schedule.note || "",
-    });
-    setScheduleSongDrafts((schedule.songs || []).map((item) => ({
-      songId: item.id,
-      usageType: item.usageType || "獻詩",
-    })));
+    const copy = cloneScheduleDraft(schedule);
+    setScheduleForm(copy.form);
+    setScheduleSongDrafts(copy.songs);
     setScheduleFormNotice("已複製「" + schedule.title + "」，請選擇新日期後建立。原行程不會被修改。");
     document.getElementById("new-schedule-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const handleAddSchedule = async (event) => {
     event.preventDefault();
-    if (!scheduleForm.date || !scheduleForm.title.trim()) {
-      alert("請填寫日期與聚會名稱");
+    const issue = validateScheduleDraft(scheduleForm, scheduleSongDrafts, data.songs);
+    if (issue) {
+      alert(issue);
       return;
     }
-    const chosenIds = scheduleSongDrafts.map((item) => item.songId).filter(Boolean);
-    if (chosenIds.length !== scheduleSongDrafts.length) {
-      alert("請為每筆練習曲目選擇曲名，或移除尚未選擇的欄位");
-      return;
-    }
-    if (new Set(chosenIds).size !== chosenIds.length) {
-      alert("同一場聚會已有重複曲目，請先調整選擇");
-      return;
-    }
-    const plannedSongs = scheduleSongDrafts.map((item) => {
-      const song = data.songs.find((candidate) => candidate.id === item.songId);
-      return song && { id: song.id, title: song.title, usageType: item.usageType };
-    });
-    if (plannedSongs.some((song) => !song)) {
-      alert("有曲目已從資料庫移除，請重新選擇");
-      return;
-    }
-    const newSchedule = {
-      id: `sch-${Date.now()}`,
-      date: scheduleForm.date,
-      title: scheduleForm.title.trim(),
-      serviceType: scheduleForm.serviceType,
-      note: scheduleForm.note,
-      songs: plannedSongs,
-    };
-    // Different services on the same date must remain distinct.
+    const newSchedule = makeScheduleFromDraft(
+      scheduleForm, scheduleSongDrafts, data.songs, `sch-${Date.now()}`
+    );
     const ok = await updateData({
       ...data,
-      schedules: [...data.schedules, newSchedule].sort((a, b) => a.date.localeCompare(b.date)),
+      schedules: insertSchedule(data.schedules, newSchedule),
     });
     if (ok) clearScheduleBuilder();
   };
