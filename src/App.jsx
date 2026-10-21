@@ -893,9 +893,9 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
     title: "",
     serviceType: "主日",
     note: "",
-    songId: "",
-    usageType: "獻詩",
   });
+  const [scheduleSongDrafts, setScheduleSongDrafts] = useState([]);
+  const [scheduleFormNotice, setScheduleFormNotice] = useState("");
 
   const [videoForm, setVideoForm] = useState({
     title: "",
@@ -1202,84 +1202,113 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
   };
 
   const handleScheduleChange = (field, value) => {
-    setScheduleForm({
-      ...scheduleForm,
-      [field]: value,
+    setScheduleForm((current) => ({ ...current, [field]: value }));
+    setScheduleFormNotice("");
+  };
+
+  const addScheduleDraftSong = () => {
+    setScheduleSongDrafts((current) => [...current, { songId: "", usageType: "獻詩" }]);
+  };
+
+  const changeScheduleDraftSong = (index, field, value) => {
+    setScheduleSongDrafts((current) => current.map((item, i) =>
+      i === index ? { ...item, [field]: value } : item
+    ));
+  };
+
+  const moveScheduleDraftSong = (index, direction) => {
+    setScheduleSongDrafts((current) => {
+      const nextIndex = index + direction;
+      if (nextIndex < 0 || nextIndex >= current.length) return current;
+      const next = [...current];
+      [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
+      return next;
     });
   };
 
-  const handleAddSchedule = (event) => {
-    event.preventDefault();
+  const clearScheduleBuilder = () => {
+    setScheduleForm({ date: "", title: "", serviceType: "主日", note: "" });
+    setScheduleSongDrafts([]);
+    setScheduleFormNotice("");
+  };
 
-    if (!scheduleForm.date || !scheduleForm.title || !scheduleForm.songId) {
-      alert("請填寫日期、聚會名稱，並選擇曲目");
-      return;
-    }
-
-    const selectedSong = data.songs.find((song) => song.id === scheduleForm.songId);
-
-    if (!selectedSong) {
-      alert("找不到選擇的曲目");
-      return;
-    }
-
-    const existingSchedule = data.schedules.find(
-      (schedule) => schedule.date === scheduleForm.date
-    );
-
-    let newSchedules;
-
-    if (existingSchedule) {
-      newSchedules = data.schedules.map((schedule) => {
-        if (schedule.id !== existingSchedule.id) return schedule;
-
-        return {
-          ...schedule,
-          title: scheduleForm.title,
-          serviceType: scheduleForm.serviceType,
-          note: scheduleForm.note,
-          songs: [
-            ...(schedule.songs || []),
-            {
-              id: selectedSong.id,
-              title: selectedSong.title,
-              usageType: scheduleForm.usageType,
-            },
-          ],
-        };
-      });
-    } else {
-      const newSchedule = {
-        id: `sch-${Date.now()}`,
-        date: scheduleForm.date,
-        title: scheduleForm.title,
-        serviceType: scheduleForm.serviceType,
-        note: scheduleForm.note,
-        songs: [
-          {
-            id: selectedSong.id,
-            title: selectedSong.title,
-            usageType: scheduleForm.usageType,
-          },
-        ],
-      };
-
-      newSchedules = [newSchedule, ...data.schedules];
-    }
-
-    updateData({
-      ...data,
-      schedules: newSchedules.sort((a, b) => a.date.localeCompare(b.date)),
-    });
-
+  const copyScheduleToBuilder = (schedule) => {
     setScheduleForm({
       date: "",
-      title: "",
-      serviceType: "主日",
-      note: "",
-      songId: "",
-      usageType: "獻詩",
+      title: schedule.title,
+      serviceType: schedule.serviceType || "主日",
+      note: schedule.note || "",
     });
+    setScheduleSongDrafts((schedule.songs || []).map((item) => ({
+      songId: item.id,
+      usageType: item.usageType || "獻詩",
+    })));
+    setScheduleFormNotice("已複製「" + schedule.title + "」，請選擇新日期後建立。原行程不會被修改。");
+    document.getElementById("new-schedule-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const handleAddSchedule = async (event) => {
+    event.preventDefault();
+    if (!scheduleForm.date || !scheduleForm.title.trim()) {
+      alert("請填寫日期與聚會名稱");
+      return;
+    }
+    const chosenIds = scheduleSongDrafts.map((item) => item.songId).filter(Boolean);
+    if (chosenIds.length !== scheduleSongDrafts.length) {
+      alert("請為每筆練習曲目選擇曲名，或移除尚未選擇的欄位");
+      return;
+    }
+    if (new Set(chosenIds).size !== chosenIds.length) {
+      alert("同一場聚會已有重複曲目，請先調整選擇");
+      return;
+    }
+    const plannedSongs = scheduleSongDrafts.map((item) => {
+      const song = data.songs.find((candidate) => candidate.id === item.songId);
+      return song && { id: song.id, title: song.title, usageType: item.usageType };
+    });
+    if (plannedSongs.some((song) => !song)) {
+      alert("有曲目已從資料庫移除，請重新選擇");
+      return;
+    }
+    const newSchedule = {
+      id: `sch-${Date.now()}`,
+      date: scheduleForm.date,
+      title: scheduleForm.title.trim(),
+      serviceType: scheduleForm.serviceType,
+      note: scheduleForm.note,
+      songs: plannedSongs,
+    };
+    // Different services on the same date must remain distinct.
+    const ok = await updateData({
+      ...data,
+      schedules: [...data.schedules, newSchedule].sort((a, b) => a.date.localeCompare(b.date)),
+    });
+    if (ok) clearScheduleBuilder();
+  };
+
+  const [addSongToSchedule, setAddSongToSchedule] = useState(null);
+  const handleAppendScheduleSong = async (scheduleId) => {
+    if (!addSongToSchedule?.songId || addSongToSchedule.scheduleId !== scheduleId) {
+      alert("請選擇要加入的曲目");
+      return;
+    }
+    const newSong = data.songs.find((song) => song.id === addSongToSchedule.songId);
+    const schedule = data.schedules.find((item) => item.id === scheduleId);
+    if (!newSong || !schedule) return;
+    if ((schedule.songs || []).some((song) => song.id === newSong.id)) {
+      alert("這首歌已安排在本場聚會中");
+      return;
+    }
+    const ok = await updateData({
+      ...data,
+      schedules: data.schedules.map((item) => item.id === scheduleId
+        ? { ...item, songs: [...(item.songs || []), {
+            id: newSong.id, title: newSong.title, usageType: addSongToSchedule.usageType
+          }] }
+        : item
+      ),
+    });
+    if (ok) setAddSongToSchedule(null);
   };
 
   const handleStartEditSchedule = (schedule) => {
