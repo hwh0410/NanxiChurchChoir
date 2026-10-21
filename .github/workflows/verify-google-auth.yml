@@ -3,6 +3,7 @@ on:
   pull_request:
   push:
     branches: [feature/google-signin-admin-sheet]
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -12,5 +13,25 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      - run: npm ci
-      - run: npm run build
+      - name: Install dependencies
+        run: npm ci
+      - name: Check Google OAuth configuration
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
+        shell: bash
+        run: |
+          if [[ ! "$VITE_GOOGLE_CLIENT_ID" =~ ^[0-9]+-[[:alnum:]-]+\.apps\.googleusercontent\.com$ ]]; then
+            echo "::error::VITE_GOOGLE_CLIENT_ID is missing or invalid. Configure it under Settings > Secrets and variables > Actions > Variables."
+            exit 1
+          fi
+      - name: Build Google login preview (no deployment)
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
+          VITE_API_BASE_URL: https://nanxichurchlinebot.onrender.com
+        run: npm run build
+      - name: Save build artifact for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: nanxi-choir-google-login-build
+          path: dist/
+          retention-days: 7
