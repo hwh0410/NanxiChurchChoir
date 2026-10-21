@@ -626,3 +626,240 @@ a { text-underline-offset: 3px; }
   .adminDesignListHeading { padding: 14px 12px; }
   .adminReadOnlyTag { font-size: 11px; }
 }
+
+/* ============================================================
+   A-style v2 / Illustrated sanctuary — responsive photo layer
+   All artwork links are local GitHub Pages assets, not remote CDN.
+   ============================================================ */
+.homeApp .heroPhotographic {
+  min-height: 575px;
+  padding-top: 25px;
+  padding-bottom: 122px;
+  background-image:
+    linear-gradient(90deg, rgba(252,249,240,.97) 0%, rgba(252,249,240,.90) 22%, rgba(252,249,240,.68) 42%, rgba(252,249,240,.10) 75%),
+    var(--hero-art),
+    url("./assets/paper-light.svg");
+  background-position: center, center 46%, center;
+  background-size: cover, cover, cover;
+  border-bottom-color: rgba(221,199,159,.6);
+}
+.homeApp .heroPhotographic::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  inset: auto 0 0;
+  height: 140px;
+  background: linear-gradient(0deg, rgba(252,249,239,.75), transparent);
+}
+.homeApp .heroPhotographic .heroOverlay {
+  padding: 0 8px;
+  z-index: 2;
+  min-height: 428px;
+  justify-content: flex-start;
+}
+.homeApp .heroBrand {
+  margin-bottom: 68px;
+}
+.homeApp .heroOverlay h1 {
+  max-width: 675px;
+  font-size: clamp(34px, 3.55vw, 54px);
+  font-weight: 700;
+  letter-spacing: .045em;
+  line-height: 1.55;
+  margin-bottom: 18px;
+  text-shadow: 0 2px 5px rgba(255,255,248,.33);
+}
+.homeApp .heroText { max-width: 520px; color: #62533f; font-size: 15px; }
+.homeApp .heroEyebrow { font-size: 12px; color: #967b4b; }
+.homeApp .heroFlowers {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  right: 0;
+  width: min(350px, 22vw);
+  height: auto;
+  opacity: .60;
+  object-fit: contain;
+  pointer-events: none;
+}
+.homeApp .navbar {
+  position: absolute;
+  z-index: 5;
+  top: 35px;
+  left: max(40%, calc(50% - 160px));
+  right: max(9%, calc((100vw - 1340px) / 2));
+  width: max-content;
+  max-width: calc(100% - 80px);
+  padding: 6px;
+  border-radius: 15px;
+  border: 1px solid rgba(224,216,193,.73);
+  background: rgba(253,251,245,.80);
+  box-shadow: 0 12px 26px rgba(85,72,49,.10);
+}
+.homeApp .navButton { padding: 10px 13px; }
+.homeApp .main {
+  max-width: 1410px;
+  position: relative;
+  z-index: 1;
+  margin-top: -122px;
+  padding-top: 0;
+}
+.homeApp .homePage { gap: 28px; }
+.homeApp .homeWelcome {
+  order: 2;
+  background: rgba(255,253,248,.86);
+  border: 1px solid rgba(226,220,209,.78);
+  border-radius: 20px;
+  padding: 22px 28px;
+  margin-top: 1px;
+}
+.homeApp .homeHighlights {
+  order: 1;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.homeApp .homeHighlight {
+  padding: 20px 20px 22px;
+  border-radius: 20px;
+  backdrop-filter: blur(4px);
+  background: rgba(255,253,248,.96);
+  min-height: 238px;
+  z-index: 0;
+}
+.homeApp .homeCardTop { margin-bottom: 17px; font-size: 14px; }
+.homeApp .homeCardTitle { font-size: clamp(17px, 1.5vw, 21px); }
+.homeApp .homeCardMeta { font-size: 12px; line-height: 1.75; }
+.homeApp .homeCardAction { margin-top: 16px; }
+.homeApp .homeVideoTile { min-height: 238px; }
+.homeVideoThumbButton {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  width: 100%;
+  padding: 0;
+  background: #f3ebdb;
+  border: 0;
+  border-radius: 13px;
+  aspect-ratio: 16/7.4;
+  margin: -4px 0 10px;
+}
+.homeVideoThumbButton img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.homeVideoPlay {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 33px;
+  height: 33px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  color: white;
+  border-radius: 50%;
+  background: rgba(69,93,61,.84);
+}
+.homeVideoPlay svg { width: 15px; height: 15px; }
+.homeVideoThumbButton:hover img { transform: scale(1.035); transition: transform .25s; }
+.homeApp .homeVideoTile .homeCardTop { margin-bottom: 15px; }
+.homeApp .homeVideoTile .homeCardTitle { font-size: 16px; line-height: 1.55; }
+.homeApp .homeVideoTile .homeCardAction { margin-top: 10px; }
+.homeScripture {
+  position: relative;
+  order: 3;
+  min-height: 215px;
+  margin: 0 -8px;
+  padding: 36px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 20px;
+  background-image:
+    linear-gradient(90deg, rgba(253,249,238,.24), rgba(253,249,238,.60)),
+    var(--landscape-art),
+    url("./assets/paper-light.svg");
+  background-position: center;
+  background-size: cover;
+  border: 1px solid rgba(220,210,185,.78);
+}
+.homeScripture::before {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  inset: 0;
+  background: linear-gradient(180deg,rgba(254,250,241,.20),rgba(254,250,241,.38));
+}
+.homeScriptureInner {
+  position: relative;
+  z-index: 1;
+  max-width: 820px;
+  text-align: center;
+  padding: 10px 20px;
+  color: #654f33;
+  text-shadow: 0 1px 1px rgba(255,252,241,.65);
+}
+.homeScriptureInner p {
+  font: 600 12px/1.6 Georgia, serif;
+  letter-spacing: .16em;
+  margin: 0 0 10px;
+}
+.homeScriptureInner blockquote {
+  font: 700 clamp(19px, 2.2vw, 28px)/1.55 var(--font-display);
+  margin: 0 0 8px;
+  color: #52412b;
+}
+.homeScriptureInner span { font-size: 13px; }
+.homeApp .homePractice { order: 4; }
+.homeApp .homeArchive { order: 5; }
+.pageFlowersLeft {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  left: -130px;
+  top: 430px;
+  width: min(290px, 23vw);
+  opacity: .32;
+}
+.homeApp .homePage > * { position: relative; }
+@media (max-width: 1100px) {
+  .homeApp .navbar { top: 25px; left: auto; right: 18px; }
+  .homeApp .homeHighlights { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .homeApp .homeHighlight { min-height: 215px; }
+  .homeApp .heroOverlay h1 { max-width: 600px; font-size: clamp(30px, 4.2vw, 44px); }
+  .homeApp .heroPhotographic { background-position: center, 56% center, center; }
+}
+@media (max-width: 700px) {
+  .homeApp .navbar {
+    position: sticky;
+    top: 0;
+    left: auto;
+    right: auto;
+    width: 100%;
+    max-width: 100%;
+    transform: none;
+    border-radius: 0;
+    justify-content: flex-start;
+    padding: 9px 12px;
+    box-shadow: 0 6px 14px rgba(58,51,39,.07);
+  }
+  .homeApp .heroPhotographic {
+    min-height: 435px;
+    padding: 16px 15px 80px;
+    background-image:
+      linear-gradient(90deg,rgba(252,249,240,.94),rgba(252,249,240,.78) 44%,rgba(252,249,240,.37)),
+      var(--hero-art),
+      url("./assets/paper-light.svg");
+    background-position: center, 58% center, center;
+  }
+  .homeApp .heroPhotographic .heroOverlay { min-height: 340px; }
+  .homeApp .heroBrand { margin-bottom: 49px; }
+  .homeApp .heroOverlay h1 { font-size: clamp(25px, 7.3vw, 36px); max-width: 100%; line-height: 1.47; }
+  .homeApp .heroText { font-size: 12px; max-width: 94%; }
+  .homeApp .heroFlowers { width: 165px; opacity: .5; }
+  .homeApp .main { margin-top: 0; padding: 18px 14px 50px; }
+  .homeApp .homeHighlights { grid-template-columns: 1fr; gap: 11px; }
+  .homeApp .homeHighlight { min-height: 0; padding: 19px; }
+  .homeApp .homeCardTop { margin-bottom: 12px; }
+  .homeScripture { min-height: 175px; padding: 25px 10px; margin: 0; }
+  .homeScriptureInner { padding: 6px; }
+  .homeApp .homeWelcome { padding: 16px; }
+  .pageFlowersLeft { left: -90px; top: 630px; width: 180px; }
+}
