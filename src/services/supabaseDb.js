@@ -1,4 +1,4 @@
-import { supabase } from "./supabaseClient";
+import { getGoogleCredential, clearGoogleCredential } from "./googleAuth";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
@@ -10,14 +10,10 @@ export const emptyData = {
   archiveVideos: [],
 };
 
-async function getAccessToken() {
-  const { data, error } = await supabase.auth.getSession();
-
-  if (error) {
-    throw error;
-  }
-
-  return data.session?.access_token || "";
+function getAccessToken() {
+  const token = getGoogleCredential();
+  if (!token) throw new Error("Google 登入已失效，請重新登入。");
+  return token;
 }
 
 function normalizeData(data) {
@@ -78,13 +74,9 @@ export async function getCloudStatus() {
 }
 
 export async function saveData(data) {
-  const token = await getAccessToken();
+  const token = getAccessToken();
 
-  if (!token) {
-    throw new Error("尚未登入管理員帳號，無法儲存資料。");
-  }
-
-  const response = await fetch(`${API_BASE_URL}/api/data`, {
+    const response = await fetch(`${API_BASE_URL}/api/data`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
