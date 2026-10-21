@@ -37,6 +37,27 @@
 .choirCalendarEvents { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
 .choirCalendarEvent { display: block; text-align: left; width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-radius: 7px; border: 1px solid #d2dfca; border-left: 3px solid #749577; background: #e9f1e4; color: #38583e; padding: 6px 6px; font-size: 12px; font-weight: 700; }
 .choirCalendarEvent:hover { background: #dbe9d5; border-color: #9ab797; }
+.choirCalendarEvent { white-space: normal; padding: 7px 6px; }
+.choirCalendarEvent .choirCalendarEventTitle { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 750; }
+.choirCalendarEvent .choirCalendarSongLine {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  max-width: 100%;
+  min-width: 0;
+  margin-top: 4px;
+  color: #596f51;
+  font-size: 10px;
+  font-weight: 550;
+  white-space: nowrap;
+}
+.choirCalendarSongLine svg,
+.choirCalendarAgendaSongs svg,
+.choirCalendarSelectedSongs svg { flex: 0 0 12px; width: 12px; height: 12px; }
+.choirCalendarSongText { display: block; flex: 1 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.choirCalendarAgendaSongs,
+.choirCalendarSelectedSongs { display: flex; align-items: center; gap: 5px; margin-top: 6px; font-size: 12px; color: #557052; min-width: 0; text-align: left; font-weight: 600; }
+.choirCalendarSelectedSongs { max-width: 100%; }
 .choirCalendarEvent > span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; display: block; }
 .choirCalendarMore { border: 0; background: transparent; padding: 0 4px; align-self: flex-start; color: #7d694d; font-size: 11px; font-weight: 600; }
 .choirCalendarMore:hover { text-decoration: underline; }
