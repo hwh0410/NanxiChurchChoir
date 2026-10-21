@@ -1,0 +1,51 @@
+
+/* Phase 2 / Schedule builder — matches the Warm Hymn design system. */
+.phase2SectionHeading { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin:0 0 22px; }
+.phase2SectionHeading h3 { margin:0 0 7px; font:700 22px/1.45 var(--font-display); color:#354737; }
+.phase2SectionHeading .eyebrow { margin:0 0 4px; }
+.phase2SectionHeading .muted { margin:0; line-height:1.7; font-size:13px; }
+.phase2SectionHeading > button { white-space:nowrap; }
+.phase2ScheduleForm { scroll-margin-top:110px; }
+.phase2FormNotice { background:#edf4e9; border:1px solid #b9d1b1; color:#476448; font-size:13px; line-height:1.8; padding:12px 15px; border-radius:12px; }
+.phase2SongBuilder {
+  background:linear-gradient(135deg,rgba(250,250,245,.95),rgba(240,245,237,.8));
+  border:1px solid #d8e1d1;
+  border-radius:18px;
+  padding:19px;
+  min-width:0;
+}
+.phase2BuilderHeading { display:flex; align-items:center; justify-content:space-between; gap:15px; margin:0 0 15px; }
+.phase2BuilderHeading strong { color:#375540; font-size:16px; }
+.phase2BuilderHeading p { margin:4px 0 0; font-size:12px; }
+.phase2BuilderHeading button { flex:none; }
+.phase2DraftList { display:grid; gap:11px; }
+.phase2DraftRow { display:grid; grid-template-columns:27px minmax(0,2fr) minmax(120px,1fr) auto; gap:9px; align-items:end; background:#fffefa; padding:11px 12px; border:1px solid #e3dfd2; border-radius:13px; }
+.phase2DraftNumber { background:#e5ecdf; color:#43604c; border-radius:50%; font-size:13px; font-weight:700; width:27px; height:27px; display:grid; place-items:center; align-self:center; }
+.phase2DraftRow label { font-size:12px; font-weight:700; min-width:0; }
+.phase2DraftRow select { width:100%; min-width:0; padding:10px; border:1px solid #d9d8cc; border-radius:10px; background:white; }
+.phase2DraftActions { display:flex; gap:5px; }
+.phase2DraftActions button { padding:8px 10px; min-height:40px; }
+.phase2DraftActions button:disabled { opacity:.34; cursor:not-allowed; }
+.phase2DraftEmpty { margin:0; font-size:13px; padding:14px; color:#817968; border:1px dashed #d4d6cb; border-radius:12px; background:#fffefa; }
+.phase2ExistingSongTools { padding:9px 14px; border-top:1px solid #e8e5dc; }
+.phase2ExistingSongTools > button { font-size:12px; }
+.phase2ExistingSongEditor { display:flex; flex-wrap:wrap; gap:9px; align-items:center; }
+.phase2ExistingSongEditor select { min-width:160px; padding:9px; border:1px solid #d8d7c9; border-radius:10px; background:white; flex:1 1 160px; }
+.phase2ExistingSongEditor button { flex:0 0 auto; font-size:12px; }
+.phase2SavingOverlay { position:relative; }
+.phase2SavingOverlay::before { content:"資料正在同步，請稍候…"; position:sticky; display:block; top:0; z-index:30; background:#edf2e9; border:1px solid #a5bda0; border-radius:11px; color:#355b41; padding:9px 14px; font-size:13px; font-weight:700; text-align:center; }
+.phase2SavingOverlay button:not(.phase2AllowWhileSaving), .phase2SavingOverlay input, .phase2SavingOverlay select, .phase2SavingOverlay textarea { pointer-events:none; opacity:.62; }
+@media (max-width:850px) {
+ .phase2DraftRow { grid-template-columns:24px minmax(0,1fr) minmax(105px,.7fr); }
+ .phase2DraftActions { grid-column:2/4; }
+}
+@media (max-width:630px) {
+ .phase2SectionHeading, .phase2BuilderHeading { flex-wrap:wrap; }
+ .phase2SongBuilder { padding:12px; }
+ .phase2DraftRow { grid-template-columns:24px 1fr; padding:11px; }
+ .phase2DraftSong, .phase2DraftUsage, .phase2DraftActions { grid-column:2; }
+ .phase2DraftNumber { grid-row:1 / span 3; align-self:start; margin-top:22px; }
+ .phase2DraftActions { grid-row:auto; }
+ .phase2ExistingSongEditor { flex-direction:column; align-items:stretch; }
+ .phase2ExistingSongEditor select, .phase2ExistingSongEditor button { width:100%; flex:auto; }
+}
