@@ -1,0 +1,37 @@
+name: Publish choir site to GitHub Pages
+
+# Manual production release: keep the current site online until the Render
+# backend has been deployed and Google admin authentication has been checked.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Validate Google OAuth client ID and build
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
+          VITE_API_BASE_URL: https://nanxichurchlinebot.onrender.com
+        shell: bash
+        run: |
+          if [[ ! "$VITE_GOOGLE_CLIENT_ID" =~ ^[0-9]+-[[:alnum:]-]+\.apps\.googleusercontent\.com$ ]]; then
+            echo "::error::Set the VITE_GOOGLE_CLIENT_ID repository variable before publishing."
+            exit 1
+          fi
+          npm run build
+      - name: Publish to the existing gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages
