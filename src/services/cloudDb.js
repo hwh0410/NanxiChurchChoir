@@ -74,9 +74,13 @@ export async function getCloudStatus() {
 }
 
 export async function saveData(data) {
+  // A design preview can read public choir data but must never modify Sheets.
+  if (import.meta.env.VITE_READ_ONLY_PREVIEW === "true") {
+    throw new Error("設計預覽模式為唯讀，無法修改正式資料。");
+  }
   const token = getAccessToken();
 
-    const response = await fetch(`${API_BASE_URL}/api/data`, {
+  const response = await fetch(`${API_BASE_URL}/api/data`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
