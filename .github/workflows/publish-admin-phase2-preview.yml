@@ -23,6 +23,8 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Test schedule planner (Node)
+        run: node --test tests/adminSchedulePlanner.test.mjs
       - name: Build non-writing preview
         env:
           VITE_BASE_PATH: /NanxiChurchChoir/preview/admin-phase2-v1/
