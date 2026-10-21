@@ -2416,7 +2416,7 @@ export default function App() {
   }
 
   return (
-    <div className="app">
+    <div className={activePage === "home" ? "app homeApp" : "app"}>
       {IS_DESIGN_PREVIEW && (
         <div className="designPreviewNotice" role="status">
           <span>設計預覽 v1 · 目前為唯讀展示，不會修改正式資料</span>
