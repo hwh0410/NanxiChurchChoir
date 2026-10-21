@@ -341,7 +341,42 @@ function HomePage({ schedules, songs, archiveVideos, onNavigate }) {
             開始練習 <ArrowRight aria-hidden="true" />
           </button>
         </article>
+
+        <article className="homeHighlight homeVideoTile">
+          <div className="homeCardTop">
+            <span className="homeCardIcon"><Film aria-hidden="true" /></span>
+            近期影片
+          </div>
+          {latestVideo && videoThumb && (
+            <button
+              type="button"
+              className="homeVideoThumbButton"
+              onClick={() => onNavigate("archive")}
+              aria-label={"前往歷年影片，查看" + latestVideo.title}
+            >
+              <img src={videoThumb} loading="lazy" alt="" />
+              <span className="homeVideoPlay"><Play aria-hidden="true" /></span>
+            </button>
+          )}
+          <h3 className="homeCardTitle">{latestVideo?.title || "珍藏詩班的歌聲"}</h3>
+          <p className="homeCardMeta">{latestVideo ? [latestVideo.date, latestVideo.eventName].filter(Boolean).join(" · ") : "演唱紀錄將陸續更新"}</p>
+          <button className="homeCardAction" type="button" onClick={() => onNavigate("archive")}>
+            歷年演唱影片 <ArrowRight aria-hidden="true" />
+          </button>
+        </article>
       </div>
+
+      <section
+        className="homeScripture"
+        style={{ "--landscape-art": `url("${import.meta.env.BASE_URL}media/hills.jpg")` }}
+        aria-label="詩班的心聲"
+      >
+        <div className="homeScriptureInner">
+          <p>以詩歌相聚 · 在信仰中同行</p>
+          <blockquote>「你們要向耶和華唱新歌！」</blockquote>
+          <span>— 詩篇 96:1</span>
+        </div>
+      </section>
 
       <section className="card homePractice" aria-labelledby="home-practice-title">
         <div className="homeSectionTitle">
@@ -2388,7 +2423,11 @@ export default function App() {
           <a href="https://hwh0410.github.io/NanxiChurchChoir/">返回正式網站</a>
         </div>
       )}
-      <header className={activePage === "home" ? "hero" : "hero heroCompact"}>
+      <header
+        className={activePage === "home" ? "hero heroPhotographic" : "hero heroCompact"}
+        style={activePage === "home" ? { "--hero-art": `url("${import.meta.env.BASE_URL}media/church-hero.jpg")` } : undefined}
+      >
+        {activePage === "home" && <img className="heroFlowers" src={`${import.meta.env.BASE_URL}media/flowers-right.png`} alt="" aria-hidden="true" />}
         <div className="heroOverlay">
           <div className="heroBrand">
             <img src={`${import.meta.env.BASE_URL}logo.png`} alt="楠西教會標誌" className="heroLogo" />
@@ -2397,8 +2436,8 @@ export default function App() {
               <small>NANXI CHURCH CHOIR</small>
             </span>
           </div>
-          <p className="heroEyebrow">SING TOGETHER · GROW IN FAITH</p>
-          <h1>時程表與自主練習平台</h1>
+          <p className="heroEyebrow">SING HIS LOVE · SHARE HIS GRACE</p>
+          <h1>楠西教會聖歌隊<br />時程表與自主練習平台</h1>
           <p className="heroText">
             每週獻詩曲目、各聲部練習資源、樂譜與歷年演唱紀錄。
             讓我們在詩歌中相聚，也在練習中成長。
@@ -2425,7 +2464,10 @@ export default function App() {
         })}
       </nav>
 
-      <main className="main">{renderPage()}</main>
+      <main className="main">
+        {activePage === "home" && <img className="pageFlowersLeft" src={`${import.meta.env.BASE_URL}media/flowers-left.png`} alt="" aria-hidden="true" />}
+        {renderPage()}
+      </main>
     </div>
   );
 }
