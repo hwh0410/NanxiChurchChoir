@@ -37,3 +37,11 @@
 ## 安全部署
 
 目前 GitHub Pages 使用 `gh-pages` 分支。合併 PR 到 `main` 本身不會執行手動發布流程。請先審查畫面、確認管理流程，再執行 `Publish choir site to GitHub Pages` 手動發布。
+
+## 線上唯讀預覽
+
+- 預覽網址：https://hwh0410.github.io/NanxiChurchChoir/preview/a-style-v1/
+- 自動發布流程：`.github/workflows/publish-a-style-preview.yml`。建置使用 `VITE_BASE_PATH=/NanxiChurchChoir/preview/a-style-v1/` 以及 `VITE_READ_ONLY_PREVIEW=true`。
+- 預覽使用相同的公開 API 讀取資料，但沒有任何正式管理表單；`cloudDb.saveData` 另有唯讀保護。
+- 版型預覽「管理」頁為展示用搜尋清單，**不是**新版 CRUD 管理頁完成品。
+- GitHub Pages 正式根目錄 `/NanxiChurchChoir/` 不變；已備份發布分支至 `backup/gh-pages-before-a-preview-20261021`。
