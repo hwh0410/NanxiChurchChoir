@@ -1,0 +1,47 @@
+name: Publish A-style design preview
+
+on:
+  push:
+    branches:
+      - feature/a-style-paper-light-v1
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nanxi-a-style-preview
+  cancel-in-progress: false
+
+jobs:
+  publish-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build nested read-only preview
+        env:
+          VITE_BASE_PATH: /NanxiChurchChoir/preview/a-style-v1/
+          VITE_READ_ONLY_PREVIEW: "true"
+          VITE_API_BASE_URL: https://nanxichurchlinebot.onrender.com
+          VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
+        run: npm run build
+      - name: Assert nested links and read-only guard
+        shell: bash
+        run: |
+          grep -q '/NanxiChurchChoir/preview/a-style-v1/assets/' dist/index.html
+          grep -R -q '設計預覽模式為唯讀' dist/assets/*.js
+      - name: Publish to preview subdirectory only
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./dist
+          destination_dir: preview/a-style-v1
+          keep_files: true
+          enable_jekyll: true
