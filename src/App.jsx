@@ -996,13 +996,35 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
       });
       return true;
     } catch (error) {
+      const conflict = error.code === "DATA_CONFLICT" || error.code === "VERSION_REQUIRED";
+      if (conflict && error.code === "DATA_CONFLICT") {
+        try {
+          // Refresh revision + displayed cloud data, but keep unsaved form values.
+          const latest = await loadDataWithStatus();
+          setData(latest.data);
+        } catch (reloadError) {
+          // A failed refresh must not silently enable a retry with an old revision.
+          setSyncStatus((current) => ({
+            ...current, state: "error",
+            message: "版本衝突後重新讀取失敗，請手動重新整理網站。",
+            error: reloadError.message,
+          }));
+          alert("雲端資料已更新，但重新讀取失敗。請重新整理網站再操作。");
+          return false;
+        }
+      }
+      const message = error.code === "DATA_CONFLICT"
+        ? "其他管理員已儲存較新的資料。畫面已重新讀取最新版本；目前表單內容仍保留，請確認後再送出。"
+        : error.code === "VERSION_REQUIRED"
+        ? "雲端版本驗證尚未就緒，儲存已停止。請確認新版後端已啟用。"
+        : "儲存結果未確認；請重新讀取雲端資料再嘗試，避免重複操作。";
       setSyncStatus((current) => ({
         ...current,
         state: "error",
-        message: "儲存失敗；畫面資料尚未變更，請檢查網路或重新登入。",
+        message,
         error: error.message,
       }));
-      alert("雲端資料儲存失敗：" + error.message);
+      alert(message + "\n" + error.message);
       return false;
     } finally {
       saveInFlight.current = false;
@@ -1516,6 +1538,11 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
         syncStatus={syncStatus}
         onRefresh={onRefreshSyncStatus}
       />
+      {syncStatus.supportsVersionedWrites === false && (
+        <p className="phase2SafetyNotice" role="status">
+          <BookOpen aria-hidden="true" /> 此環境尚未啟用新版資料版本保護，因此管理儲存暫時停用。公開資料仍可正常瀏覽。
+        </p>
+      )}
 
       <div className="adminTabs">
         <button className={adminTab === "schedule" ? "adminTab active" : "adminTab"} type="button" onClick={() => openAdminTab("schedule")}>排程管理</button>
@@ -2651,6 +2678,7 @@ export default function App() {
           state: "ready",
           message: "已連線 Google Sheet，資料讀取成功。",
           cache: result.cache || null,
+          supportsVersionedWrites: result.supportsVersionedWrites,
           lastSavedAt: null,
           error: "",
         });
