@@ -6,6 +6,7 @@ const API_BASE_URL =
 
 // Revision token lives only in memory and is reset on every fresh read.
 let latestVersion = null;
+let writeInFlight = false;
 
 export const emptyData = {
   schedules: [],
@@ -89,21 +90,31 @@ export async function saveData(data) {
     error.code = "VERSION_REQUIRED";
     throw error;
   }
-  const token = getAccessToken();
-  const response = await fetch(`${API_BASE_URL}/api/data/v2`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ version: latestVersion, data: normalizeData(data) }),
-  });
-  const result = await parseApiResponse(response);
-  if (!result.version) {
-    throw new Error("後端未回傳資料版本，請重新載入以確認是否儲存成功。");
+  if (writeInFlight) {
+    const error = new Error("上一筆雲端儲存尚未完成，請稍後再操作。");
+    error.code = "WRITE_IN_PROGRESS";
+    throw error;
   }
-  latestVersion = result.version;
-  return result;
+  writeInFlight = true;
+  try {
+    const token = getAccessToken();
+    const response = await fetch(`${API_BASE_URL}/api/data/v2`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ version: latestVersion, data: normalizeData(data) }),
+    });
+    const result = await parseApiResponse(response);
+    if (!result.version) {
+      throw new Error("後端未回傳資料版本，請重新載入以確認是否儲存成功。");
+    }
+    latestVersion = result.version;
+    return result;
+  } finally {
+    writeInFlight = false;
+  }
 }
 export async function resetData() {
   const result = await saveData(emptyData);
