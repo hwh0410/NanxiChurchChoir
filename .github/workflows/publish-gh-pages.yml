@@ -3,8 +3,6 @@ name: Publish choir site to GitHub Pages
 # After the approved visual release, production deployments are manual-only.
 # Phase 2 changes are reviewed and tested before release.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
