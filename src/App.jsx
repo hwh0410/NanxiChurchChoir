@@ -2,7 +2,7 @@ import { renderGoogleSignIn, authorizeGoogleCredential, resumeGoogleAdmin, clear
 import { getYoutubeEmbedUrl } from "./services/youtube";
 import { getGoogleDrivePreviewUrl } from "./services/googleDrive";
 import { getYoutubeThumbnail } from "./services/youtube";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   House, CalendarDays, Music2, Film, Settings2,
   ArrowRight, BookOpen, Play, ChevronLeft, ChevronRight, List, LayoutGrid
@@ -10,6 +10,8 @@ import {
 import "./styles.css";
 import "./theme-v1.css";
 import "./calendar-v1.css";
+import "./admin-phase2.css";
+import { validateScheduleDraft, makeScheduleFromDraft, cloneScheduleDraft, insertSchedule } from "./utils/adminSchedulePlanner.mjs";
 import {
   emptyData,
   loadDataWithStatus,
@@ -861,6 +863,9 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [loginError, setLoginError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const saveInFlight = useRef(false);
+  const [addSongToSchedule, setAddSongToSchedule] = useState(null);
 
   const [songForm, setSongForm] = useState({
     title: "",
@@ -893,9 +898,9 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
     title: "",
     serviceType: "主日",
     note: "",
-    songId: "",
-    usageType: "獻詩",
   });
+  const [scheduleSongDrafts, setScheduleSongDrafts] = useState([]);
+  const [scheduleFormNotice, setScheduleFormNotice] = useState("");
 
   const [videoForm, setVideoForm] = useState({
     title: "",
@@ -965,19 +970,23 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
   }
 
   const updateData = async (newData) => {
-    setData(newData);
-
-    setSyncStatus({
+    if (saveInFlight.current) {
+      alert("正在儲存上一筆資料，請等雲端同步完成後再操作。");
+      return false;
+    }
+    saveInFlight.current = true;
+    setIsSaving(true);
+    setSyncStatus((current) => ({
+      ...current,
       state: "saving",
       message: "正在儲存至 Google Sheet，請稍候...",
-      cache: syncStatus?.cache || null,
-      lastSavedAt: syncStatus?.lastSavedAt || null,
       error: "",
-    });
-
+    }));
     try {
       const result = await saveData(newData);
-
+      // Publish the change to the UI after the server confirms the write.
+      // A failed request cannot leave a false 'saved' state on screen.
+      setData(result.data || newData);
       setSyncStatus({
         state: "success",
         message: "已儲存至 Google Sheet，LINE Bot 已同步更新。",
@@ -985,16 +994,41 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
         lastSavedAt: new Date().toISOString(),
         error: "",
       });
+      return true;
     } catch (error) {
-      setSyncStatus({
+      const conflict = error.code === "DATA_CONFLICT" || error.code === "VERSION_REQUIRED";
+      if (conflict && error.code === "DATA_CONFLICT") {
+        try {
+          // Refresh revision + displayed cloud data, but keep unsaved form values.
+          const latest = await loadDataWithStatus();
+          setData(latest.data);
+        } catch (reloadError) {
+          // A failed refresh must not silently enable a retry with an old revision.
+          setSyncStatus((current) => ({
+            ...current, state: "error",
+            message: "版本衝突後重新讀取失敗，請手動重新整理網站。",
+            error: reloadError.message,
+          }));
+          alert("雲端資料已更新，但重新讀取失敗。請重新整理網站再操作。");
+          return false;
+        }
+      }
+      const message = error.code === "DATA_CONFLICT"
+        ? "其他管理員已儲存較新的資料。畫面已重新讀取最新版本；目前表單內容仍保留，請確認後再送出。"
+        : error.code === "VERSION_REQUIRED"
+        ? "雲端版本驗證尚未就緒，儲存已停止。請確認新版後端已啟用。"
+        : "儲存結果未確認；請重新讀取雲端資料再嘗試，避免重複操作。";
+      setSyncStatus((current) => ({
+        ...current,
         state: "error",
-        message: "儲存失敗，請檢查網路或管理員登入狀態。",
-        cache: syncStatus?.cache || null,
-        lastSavedAt: syncStatus?.lastSavedAt || null,
+        message,
         error: error.message,
-      });
-
-      alert(`雲端資料儲存失敗：${error.message}`);
+      }));
+      alert(message + "\n" + error.message);
+      return false;
+    } finally {
+      saveInFlight.current = false;
+      setIsSaving(false);
     }
   };
 
@@ -1005,7 +1039,7 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
     });
   };
 
-  const handleAddSong = (event) => {
+  const handleAddSong = async (event) => {
     event.preventDefault();
 
     if (!songForm.title) {
@@ -1019,12 +1053,12 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
       resources: [],
     };
 
-    updateData({
+    const saved = await updateData({
       ...data,
       songs: [newSong, ...data.songs],
     });
 
-    setSongForm({
+    if (saved) setSongForm({
       title: "",
       key: "",
       tempo: "",
@@ -1046,7 +1080,7 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
     });
   };
 
-  const handleSaveSongEdit = () => {
+  const handleSaveSongEdit = async () => {
     if (!editingSong || !editingSong.title) {
       alert("請至少填寫曲名");
       return;
@@ -1068,13 +1102,13 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
       }),
     }));
 
-    updateData({
+    const saved = await updateData({
       ...data,
       songs: newSongs,
       schedules: newSchedules,
     });
 
-    setEditingSong(null);
+    if (saved) setEditingSong(null);
   };
 
   const handleDeleteSong = (songId) => {
@@ -1102,7 +1136,7 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
     });
   };
 
-  const handleAddResource = (event) => {
+  const handleAddResource = async (event) => {
     event.preventDefault();
 
     if (!resourceForm.songId || !resourceForm.title || !resourceForm.url) {
@@ -1124,12 +1158,12 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
       };
     });
 
-    updateData({
+    const saved = await updateData({
       ...data,
       songs: newSongs,
     });
 
-    setResourceForm({
+    if (saved) setResourceForm({
       songId: "",
       type: "youtube",
       voicePart: "全體",
@@ -1152,7 +1186,7 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
     });
   };
 
-  const handleSaveResourceEdit = () => {
+  const handleSaveResourceEdit = async () => {
     if (!editingResource || !editingResource.title || !editingResource.url) {
       alert("請填寫資源名稱與連結");
       return;
@@ -1172,12 +1206,12 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
       };
     });
 
-    updateData({
+    const saved = await updateData({
       ...data,
       songs: newSongs,
     });
 
-    setEditingResource(null);
+    if (saved) setEditingResource(null);
   };
 
   const handleDeleteResource = (songId, resourceId) => {
@@ -1202,84 +1236,83 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
   };
 
   const handleScheduleChange = (field, value) => {
-    setScheduleForm({
-      ...scheduleForm,
-      [field]: value,
+    setScheduleForm((current) => ({ ...current, [field]: value }));
+    setScheduleFormNotice("");
+  };
+
+  const addScheduleDraftSong = () => {
+    setScheduleSongDrafts((current) => [...current, { songId: "", usageType: "獻詩" }]);
+  };
+
+  const changeScheduleDraftSong = (index, field, value) => {
+    setScheduleSongDrafts((current) => current.map((item, i) =>
+      i === index ? { ...item, [field]: value } : item
+    ));
+  };
+
+  const moveScheduleDraftSong = (index, direction) => {
+    setScheduleSongDrafts((current) => {
+      const nextIndex = index + direction;
+      if (nextIndex < 0 || nextIndex >= current.length) return current;
+      const next = [...current];
+      [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
+      return next;
     });
   };
 
-  const handleAddSchedule = (event) => {
+  const clearScheduleBuilder = () => {
+    setScheduleForm({ date: "", title: "", serviceType: "主日", note: "" });
+    setScheduleSongDrafts([]);
+    setScheduleFormNotice("");
+  };
+
+  const copyScheduleToBuilder = (schedule) => {
+    const copy = cloneScheduleDraft(schedule);
+    setScheduleForm(copy.form);
+    setScheduleSongDrafts(copy.songs);
+    setScheduleFormNotice("已複製「" + schedule.title + "」，請選擇新日期後建立。原行程不會被修改。");
+    document.getElementById("new-schedule-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const handleAddSchedule = async (event) => {
     event.preventDefault();
-
-    if (!scheduleForm.date || !scheduleForm.title || !scheduleForm.songId) {
-      alert("請填寫日期、聚會名稱，並選擇曲目");
+    const issue = validateScheduleDraft(scheduleForm, scheduleSongDrafts, data.songs);
+    if (issue) {
+      alert(issue);
       return;
     }
-
-    const selectedSong = data.songs.find((song) => song.id === scheduleForm.songId);
-
-    if (!selectedSong) {
-      alert("找不到選擇的曲目");
-      return;
-    }
-
-    const existingSchedule = data.schedules.find(
-      (schedule) => schedule.date === scheduleForm.date
+    const newSchedule = makeScheduleFromDraft(
+      scheduleForm, scheduleSongDrafts, data.songs, `sch-${Date.now()}`
     );
-
-    let newSchedules;
-
-    if (existingSchedule) {
-      newSchedules = data.schedules.map((schedule) => {
-        if (schedule.id !== existingSchedule.id) return schedule;
-
-        return {
-          ...schedule,
-          title: scheduleForm.title,
-          serviceType: scheduleForm.serviceType,
-          note: scheduleForm.note,
-          songs: [
-            ...(schedule.songs || []),
-            {
-              id: selectedSong.id,
-              title: selectedSong.title,
-              usageType: scheduleForm.usageType,
-            },
-          ],
-        };
-      });
-    } else {
-      const newSchedule = {
-        id: `sch-${Date.now()}`,
-        date: scheduleForm.date,
-        title: scheduleForm.title,
-        serviceType: scheduleForm.serviceType,
-        note: scheduleForm.note,
-        songs: [
-          {
-            id: selectedSong.id,
-            title: selectedSong.title,
-            usageType: scheduleForm.usageType,
-          },
-        ],
-      };
-
-      newSchedules = [newSchedule, ...data.schedules];
-    }
-
-    updateData({
+    const ok = await updateData({
       ...data,
-      schedules: newSchedules.sort((a, b) => a.date.localeCompare(b.date)),
+      schedules: insertSchedule(data.schedules, newSchedule),
     });
+    if (ok) clearScheduleBuilder();
+  };
 
-    setScheduleForm({
-      date: "",
-      title: "",
-      serviceType: "主日",
-      note: "",
-      songId: "",
-      usageType: "獻詩",
+  const handleAppendScheduleSong = async (scheduleId) => {
+    if (!addSongToSchedule?.songId || addSongToSchedule.scheduleId !== scheduleId) {
+      alert("請選擇要加入的曲目");
+      return;
+    }
+    const newSong = data.songs.find((song) => song.id === addSongToSchedule.songId);
+    const schedule = data.schedules.find((item) => item.id === scheduleId);
+    if (!newSong || !schedule) return;
+    if ((schedule.songs || []).some((song) => song.id === newSong.id)) {
+      alert("這首歌已安排在本場聚會中");
+      return;
+    }
+    const ok = await updateData({
+      ...data,
+      schedules: data.schedules.map((item) => item.id === scheduleId
+        ? { ...item, songs: [...(item.songs || []), {
+            id: newSong.id, title: newSong.title, usageType: addSongToSchedule.usageType
+          }] }
+        : item
+      ),
     });
+    if (ok) setAddSongToSchedule(null);
   };
 
   const handleStartEditSchedule = (schedule) => {
@@ -1299,7 +1332,7 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
     });
   };
 
-  const handleSaveScheduleEdit = () => {
+  const handleSaveScheduleEdit = async () => {
     if (!editingSchedule || !editingSchedule.date || !editingSchedule.title) {
       alert("請填寫日期與聚會名稱");
       return;
@@ -1319,12 +1352,12 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
       })
       .sort((a, b) => a.date.localeCompare(b.date));
 
-    updateData({
+    const saved = await updateData({
       ...data,
       schedules: newSchedules,
     });
 
-    setEditingSchedule(null);
+    if (saved) setEditingSchedule(null);
   };
 
   const handleDeleteSchedule = (scheduleId) => {
@@ -1353,7 +1386,7 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
     });
   };
 
-  const handleSaveScheduleSongEdit = () => {
+  const handleSaveScheduleSongEdit = async () => {
     if (!editingScheduleSong) return;
 
     const selectedSong = data.songs.find(
@@ -1382,12 +1415,12 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
       };
     });
 
-    updateData({
+    const saved = await updateData({
       ...data,
       schedules: newSchedules,
     });
 
-    setEditingScheduleSong(null);
+    if (saved) setEditingScheduleSong(null);
   };
 
   const handleRemoveScheduleSong = (scheduleId, songId) => {
@@ -1413,7 +1446,7 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
     });
   };
 
-  const handleAddVideo = (event) => {
+  const handleAddVideo = async (event) => {
     event.preventDefault();
 
     if (!videoForm.title || !videoForm.youtubeUrl) {
@@ -1426,12 +1459,12 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
       ...videoForm,
     };
 
-    updateData({
+    const saved = await updateData({
       ...data,
       archiveVideos: [newVideo, ...data.archiveVideos],
     });
 
-    setVideoForm({
+    if (saved) setVideoForm({
       title: "",
       date: "",
       eventName: "",
@@ -1454,7 +1487,7 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
     });
   };
 
-  const handleSaveVideoEdit = () => {
+  const handleSaveVideoEdit = async () => {
     if (!editingVideo || !editingVideo.title || !editingVideo.youtubeUrl) {
       alert("請至少填寫曲名/標題與 YouTube 連結");
       return;
@@ -1465,12 +1498,12 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
       return editingVideo;
     });
 
-    updateData({
+    const saved = await updateData({
       ...data,
       archiveVideos: newVideos,
     });
 
-    setEditingVideo(null);
+    if (saved) setEditingVideo(null);
   };
 
   const handleDeleteVideo = (videoId) => {
@@ -1484,7 +1517,7 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
   };
 
   return (
-    <section className="card">
+    <section className={isSaving ? "card phase2SavingOverlay" : "card"} aria-busy={isSaving}>
       <div className="adminHeader">
         <div>
           <p className="eyebrow">ADMIN WORKSPACE</p>
@@ -1505,6 +1538,11 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
         syncStatus={syncStatus}
         onRefresh={onRefreshSyncStatus}
       />
+      {syncStatus.supportsVersionedWrites === false && (
+        <p className="phase2SafetyNotice" role="status">
+          <BookOpen aria-hidden="true" /> 此環境尚未啟用新版資料版本保護，因此管理儲存暫時停用。公開資料仍可正常瀏覽。
+        </p>
+      )}
 
       <div className="adminTabs">
         <button className={adminTab === "schedule" ? "adminTab active" : "adminTab"} type="button" onClick={() => openAdminTab("schedule")}>排程管理</button>
@@ -1540,9 +1578,17 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
             {adminTab === "schedule" && (
         <>
 <div className="adminSection">
-        <h3>新增/更新每週排程</h3>
+        <div className="phase2SectionHeading">
+          <div>
+            <p className="eyebrow">SCHEDULE BUILDER</p>
+            <h3>建立聚會與曲目安排</h3>
+            <p className="muted">一次安排多首曲目、調整順序；尚未決定曲目也可以先建立行程。</p>
+          </div>
+          <button type="button" className="secondaryButton" onClick={clearScheduleBuilder}>清空表單</button>
+        </div>
+        {scheduleFormNotice && <p className="phase2FormNotice" role="status">{scheduleFormNotice}</p>}
 
-        <form className="formGrid" onSubmit={handleAddSchedule}>
+        <form id="new-schedule-form" className="formGrid phase2ScheduleForm" onSubmit={handleAddSchedule}>
           <label>
             日期 *
             <input
@@ -1574,34 +1620,50 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
             />
           </label>
 
-          <label>
-            曲目用途
-            <select
-              value={scheduleForm.usageType}
-              onChange={(e) => handleScheduleChange("usageType", e.target.value)}
-            >
-              <option value="獻詩">獻詩</option>
-              <option value="敬拜詩">敬拜詩</option>
-              <option value="回應詩">回應詩</option>
-              <option value="練習曲">練習曲</option>
-              <option value="其他">其他</option>
-            </select>
-          </label>
-
-          <label className="fullWidth">
-            選擇曲目 *
-            <select
-              value={scheduleForm.songId}
-              onChange={(e) => handleScheduleChange("songId", e.target.value)}
-            >
-              <option value="">請選擇曲目</option>
-              {data.songs.map((song) => (
-                <option key={song.id} value={song.id}>
-                  {song.title}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="fullWidth phase2SongBuilder">
+            <div className="phase2BuilderHeading">
+              <div><strong>獻詩／練習曲目</strong>
+                <p className="muted">可新增多首，也可以先保留空白，之後在現有行程補上。</p>
+              </div>
+              <button type="button" className="secondaryButton" onClick={addScheduleDraftSong}>＋ 新增一首</button>
+            </div>
+            {scheduleSongDrafts.length ? (
+              <div className="phase2DraftList">
+                {scheduleSongDrafts.map((item, index) => (
+                  <div className="phase2DraftRow" key={index}>
+                    <span className="phase2DraftNumber">{index + 1}</span>
+                    <label className="phase2DraftSong">
+                      曲目
+                      <select value={item.songId}
+                        onChange={(event) => changeScheduleDraftSong(index, "songId", event.target.value)}>
+                        <option value="">請選擇曲目</option>
+                        {data.songs.map((song) => (
+                          <option key={song.id} value={song.id}>{song.title}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="phase2DraftUsage">
+                      用途
+                      <select value={item.usageType}
+                        onChange={(event) => changeScheduleDraftSong(index, "usageType", event.target.value)}>
+                        {["獻詩", "敬拜詩", "回應詩", "練習曲", "其他"].map((usage) => (
+                          <option key={usage} value={usage}>{usage}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <div className="phase2DraftActions" role="group" aria-label={"第" + (index + 1) + "首曲目操作"}>
+                      <button type="button" className="secondaryButton" disabled={index === 0}
+                        aria-label="上移曲目" onClick={() => moveScheduleDraftSong(index, -1)}>↑</button>
+                      <button type="button" className="secondaryButton" disabled={index === scheduleSongDrafts.length - 1}
+                        aria-label="下移曲目" onClick={() => moveScheduleDraftSong(index, 1)}>↓</button>
+                      <button type="button" className="secondaryButton" aria-label="移除曲目"
+                        onClick={() => setScheduleSongDrafts((current) => current.filter((_, i) => i !== index))}>移除</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : <p className="phase2DraftEmpty">尚未加入曲目，這筆聚會可以先存成沒有曲目的行程。</p>}
+          </div>
 
           <label className="fullWidth">
             當週備註
@@ -1612,8 +1674,8 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
             />
           </label>
 
-          <button className="primaryButton" type="submit">
-            新增/更新排程
+          <button className="primaryButton" type="submit" disabled={isSaving}>
+            {isSaving ? "正在同步…" : "建立行程並儲存"}
           </button>
         </form>
       </div>
@@ -1697,6 +1759,8 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
                       </div>
 
                       <div className="buttonRow">
+                        <button type="button" className="secondaryButton"
+                          onClick={() => copyScheduleToBuilder(schedule)}>複製行程</button>
                         <button
                           className="secondaryButton"
                           type="button"
@@ -1717,6 +1781,31 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
                   )}
                 </div>
 
+                <div className="phase2ExistingSongTools">
+                  {addSongToSchedule?.scheduleId === schedule.id ? (
+                    <div className="phase2ExistingSongEditor">
+                      <select aria-label="加入曲目" value={addSongToSchedule.songId}
+                        onChange={(event) => setAddSongToSchedule((current) => ({ ...current, songId: event.target.value }))}>
+                        <option value="">選擇要加入的曲目</option>
+                        {data.songs.map((song) => <option key={song.id} value={song.id}>{song.title}</option>)}
+                      </select>
+                      <select aria-label="曲目用途" value={addSongToSchedule.usageType}
+                        onChange={(event) => setAddSongToSchedule((current) => ({ ...current, usageType: event.target.value }))}>
+                        {["獻詩", "敬拜詩", "回應詩", "練習曲", "其他"].map((usage) => (
+                          <option key={usage} value={usage}>{usage}</option>
+                        ))}
+                      </select>
+                      <button type="button" className="primaryButton" disabled={isSaving}
+                        onClick={() => handleAppendScheduleSong(schedule.id)}>儲存加入</button>
+                      <button type="button" className="secondaryButton"
+                        onClick={() => setAddSongToSchedule(null)}>取消</button>
+                    </div>
+                  ) : (
+                    <button type="button" className="secondaryButton" onClick={() => setAddSongToSchedule({
+                      scheduleId: schedule.id, songId: "", usageType: "獻詩"
+                    })}>＋ 加入曲目</button>
+                  )}
+                </div>
                 {(schedule.songs || []).map((song) => {
                   const isEditing =
                     editingScheduleSong &&
@@ -2368,6 +2457,116 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
   );
 }
 
+function Phase2ScheduleBuilderDemo({ data }) {
+  const [draft, setDraft] = useState({ date: "", title: "", serviceType: "主日" });
+  const [songDrafts, setSongDrafts] = useState([]);
+  const [example, setExample] = useState(null);
+  const [copyFrom, setCopyFrom] = useState("");
+  const copyExample = (id) => {
+    setCopyFrom(id);
+    const origin = data.schedules.find((item) => item.id === id);
+    if (!origin) return;
+    setDraft({ date: "", title: origin.title, serviceType: origin.serviceType || "主日" });
+    setSongDrafts((origin.songs || []).map((item) => ({
+      songId: item.id, usageType: item.usageType || "獻詩"
+    })));
+    setExample(null);
+  };
+  const move = (index, direction) => {
+    setSongDrafts((current) => {
+      const next = [...current], to = index + direction;
+      if (to < 0 || to >= next.length) return current;
+      [next[index], next[to]] = [next[to], next[index]];
+      return next;
+    });
+  };
+  const selectedSongs = songDrafts.map((item) => ({
+    name: data.songs.find((song) => song.id === item.songId)?.title,
+    usageType: item.usageType
+  }));
+  return (
+    <section className="phase2Demo" aria-label="第二期行程建立體驗">
+      <div className="phase2SectionHeading">
+        <div>
+          <p className="eyebrow">PHASE 2 · INTERACTIVE DEMO</p>
+          <h3>聚會與曲目安排工作台</h3>
+          <p className="muted">可以試填、加入曲目及調整順序。這裡只模擬操作，不會送出或修改任何 Google Sheets 資料。</p>
+        </div>
+        <span className="adminReadOnlyTag">互動試填</span>
+      </div>
+      <div className="phase2DemoTemplate">
+        <label>快速套用既有行程
+          <select value={copyFrom} onChange={(event) => copyExample(event.target.value)}>
+            <option value="">選擇要複製的行程（可不選）</option>
+            {data.schedules.slice().sort((a, b) => b.date.localeCompare(a.date)).map((item) => (
+              <option key={item.id} value={item.id}>{item.date} · {item.title}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className="formGrid phase2ScheduleForm">
+        <label>新行程日期
+          <input type="date" value={draft.date} onChange={(e) => setDraft((current) => ({...current,date:e.target.value}))}/>
+        </label>
+        <label>聚會類型
+          <select value={draft.serviceType} onChange={(e) => setDraft((current) => ({...current,serviceType:e.target.value}))}>
+            {["主日", "練習", "特別聚會", "其他"].map((item) => <option key={item}>{item}</option>)}
+          </select>
+        </label>
+        <label className="fullWidth">聚會名稱
+          <input value={draft.title} placeholder="例如：主日禮拜" onChange={(e) => setDraft((current) => ({...current,title:e.target.value}))}/>
+        </label>
+        <div className="fullWidth phase2SongBuilder">
+          <div className="phase2BuilderHeading">
+            <strong>詩歌清單（依順序）</strong>
+            <button type="button" className="secondaryButton" onClick={() =>
+              setSongDrafts((items) => [...items,{songId:"",usageType:"獻詩"}])}>＋ 加入曲目</button>
+          </div>
+          <div className="phase2DraftList">
+            {songDrafts.map((item, index) => (
+              <div className="phase2DraftRow" key={index}>
+                <span className="phase2DraftNumber">{index+1}</span>
+                <label className="phase2DraftSong">曲目
+                  <select value={item.songId} onChange={(event) => setSongDrafts((items) => items.map((x,i) =>
+                    i===index ? {...x,songId:event.target.value} : x
+                  ))}>
+                    <option value="">請選擇曲目</option>
+                    {data.songs.map((song) => <option key={song.id} value={song.id}>{song.title}</option>)}
+                  </select>
+                </label>
+                <label className="phase2DraftUsage">用途
+                  <select value={item.usageType} onChange={(event) => setSongDrafts((items) => items.map((x,i) =>
+                    i===index ? {...x,usageType:event.target.value} : x
+                  ))}>
+                    {["獻詩","敬拜詩","回應詩","練習曲","其他"].map((usage) => <option key={usage}>{usage}</option>)}
+                  </select>
+                </label>
+                <div className="phase2DraftActions">
+                  <button className="secondaryButton" type="button" disabled={index===0} onClick={() => move(index,-1)}>↑</button>
+                  <button className="secondaryButton" type="button" disabled={index===songDrafts.length-1} onClick={() => move(index,1)}>↓</button>
+                  <button className="secondaryButton" type="button" onClick={() => setSongDrafts((items) => items.filter((_,i) => i!==index))}>移除</button>
+                </div>
+              </div>
+            ))}
+            {!songDrafts.length && <p className="phase2DraftEmpty">尚無曲目，可以先建立行程再補上。</p>}
+          </div>
+        </div>
+        <button type="button" className="primaryButton" onClick={() => setExample({
+          ...draft, songs:selectedSongs
+        })}>預覽建立結果（不儲存）</button>
+      </div>
+      {example && (
+        <div className="phase2DemoResult" role="status">
+          <strong>模擬結果：{example.date || "尚未選擇日期"} · {example.title || "尚未填寫名稱"}</strong>
+          <p>{example.serviceType}｜{example.songs.length} 首曲目</p>
+          {example.songs.map((item, index) => <p key={index}>{index + 1}. {item.name || "尚未選曲"}（{item.usageType}）</p>)}
+          <small>這是畫面預覽，沒有建立行程，也沒有儲存資料。</small>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function AdminReadOnlyPreview({ data }) {
   const [tab, setTab] = useState("schedules");
   const [keyword, setKeyword] = useState("");
@@ -2410,6 +2609,7 @@ function AdminReadOnlyPreview({ data }) {
         <span><strong>{data.songs.length}</strong> 首曲目</span>
         <span><strong>{data.archiveVideos.length}</strong> 部影片</span>
       </div>
+      {tab === "schedules" && <Phase2ScheduleBuilderDemo data={data} />}
       <div className="adminTabs">
         {categories.map(cat => (
           <button
@@ -2478,6 +2678,7 @@ export default function App() {
           state: "ready",
           message: "已連線 Google Sheet，資料讀取成功。",
           cache: result.cache || null,
+          supportsVersionedWrites: result.supportsVersionedWrites,
           lastSavedAt: null,
           error: "",
         });
