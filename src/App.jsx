@@ -11,6 +11,7 @@ import "./styles.css";
 import "./theme-v1.css";
 import "./calendar-v1.css";
 import "./admin-phase2.css";
+import { filterAndSortSchedules, dateInTaiwan, nextSundayDate } from "./utils/adminSchedulePolish.mjs";
 import { validateScheduleDraft, makeScheduleFromDraft, cloneScheduleDraft, insertSchedule } from "./utils/adminSchedulePlanner.mjs";
 import {
   emptyData,
@@ -876,6 +877,7 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
 
   const [adminTab, setAdminTab] = useState("schedule");
   const [adminQuery, setAdminQuery] = useState("");
+  const [scheduleSort, setScheduleSort] = useState("upcoming");
   const query = adminQuery.trim().toLocaleLowerCase("zh-TW");
   const matchesQuery = (...fields) => !query || fields.some((value) =>
     String(value ?? "").toLocaleLowerCase("zh-TW").includes(query)
@@ -1561,7 +1563,7 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
             value={adminQuery}
             onChange={(event) => setAdminQuery(event.target.value)}
             placeholder={
-              adminTab === "schedule" ? "搜尋日期、聚會名稱、備註…" :
+              adminTab === "schedule" ? "搜尋日期、聚會、獻詩曲名、備註…" :
               adminTab === "songs" ? "搜尋曲名、調性…" :
               adminTab === "resources" ? "搜尋曲目、資源名稱…" :
               "搜尋影片名稱、日期、場合…"
@@ -1588,11 +1590,17 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
         </div>
         {scheduleFormNotice && <p className="phase2FormNotice" role="status">{scheduleFormNotice}</p>}
 
+        <div className="adminPolishQuickDates" aria-label="日期快捷鍵">
+          <span>快速選日期</span>
+          <button type="button" className="secondaryButton" onClick={() => handleScheduleChange("date", dateInTaiwan())}>今天</button>
+          <button type="button" className="secondaryButton" onClick={() => handleScheduleChange("date", nextSundayDate(dateInTaiwan()))}>最近的主日</button>
+        </div>
         <form id="new-schedule-form" className="formGrid phase2ScheduleForm" onSubmit={handleAddSchedule}>
           <label>
             日期 *
             <input
               type="date"
+              required
               value={scheduleForm.date}
               onChange={(e) => handleScheduleChange("date", e.target.value)}
             />
@@ -1617,6 +1625,8 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
               value={scheduleForm.title}
               onChange={(e) => handleScheduleChange("title", e.target.value)}
               placeholder="例如：主日禮拜"
+              required
+              maxLength={100}
             />
           </label>
 
@@ -1674,18 +1684,28 @@ function AdminPage({ data, setData, onReset, syncStatus, setSyncStatus, onRefres
             />
           </label>
 
-          <button className="primaryButton" type="submit" disabled={isSaving}>
-            {isSaving ? "正在同步…" : "建立行程並儲存"}
-          </button>
+          <div className="fullWidth adminPolishSubmit">
+            <span>本次將建立 {scheduleSongDrafts.length} 首曲目的聚會；儲存成功後會同步至月曆。</span>
+            <button className="primaryButton" type="submit" disabled={isSaving}>
+              {isSaving ? "正在同步…" : "建立行程並儲存"}
+            </button>
+          </div>
         </form>
       </div>
 
       <div className="adminSection">
-        <h3>目前排程</h3>
-
+        <div className="phase2SectionHeading adminPolishHeading">
+          <div><h3>目前排程</h3><p className="muted">也能依曲目名稱搜尋，方便查找練習安排。</p></div>
+          <label className="adminPolishSort">日期排序
+            <select value={scheduleSort} onChange={(event) => setScheduleSort(event.target.value)}>
+              <option value="upcoming">由早到晚</option>
+              <option value="latest">由晚到早</option>
+            </select>
+          </label>
+        </div>
+        <p className="adminPolishCount" role="status">顯示 {filterAndSortSchedules(data.schedules, adminQuery, scheduleSort).length} 筆／共 {data.schedules.length} 筆行程</p>
         <div className="list">
-          {data.schedules
-            .filter((schedule) => matchesQuery(schedule.date, schedule.title, schedule.serviceType, schedule.note))
+          {filterAndSortSchedules(data.schedules, adminQuery, scheduleSort)
             .map((schedule) => {
             const isScheduleEditing =
               editingSchedule && editingSchedule.id === schedule.id;
