@@ -15,6 +15,8 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Run admin helper tests
+        run: node --test tests/*.test.mjs
       - name: Check Google OAuth configuration
         env:
           VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
