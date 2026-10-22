@@ -11,6 +11,7 @@ import "./styles.css";
 import "./theme-v1.css";
 import "./calendar-v1.css";
 import "./admin-phase2.css";
+import "./practice-flat.css";
 import { filterAndSortSchedules, dateInTaiwan, nextSundayDate } from "./utils/adminSchedulePolish.mjs";
 import { validateScheduleDraft, makeScheduleFromDraft, cloneScheduleDraft, insertSchedule } from "./utils/adminSchedulePlanner.mjs";
 import {
@@ -126,131 +127,91 @@ function SyncStatusCard({ syncStatus, onRefresh }) {
   );
 }
 
-function ResourceCard({ resource }) {
-  const [isPlaying, setIsPlaying] = useState(false);
+const VOICE_PART_ORDER = ["全體", "女高音", "女低音", "男高音", "男低音", "伴奏", "其他"];
 
-  const thumb =
-    resource.type === "youtube" ? getYoutubeThumbnail(resource.url) : "";
-
-  const embedUrl =
-    resource.type === "youtube"
-      ? getYoutubeEmbedUrl(resource.url)
-      : "";
+function ResourceRow({ resource }) {
+  const [expanded, setExpanded] = useState(false);
+  const isVideo = resource.type === "youtube";
+  const isScore = resource.type === "score";
+  const typeLabel = isVideo ? "影片" : isScore ? "樂譜" : "音檔／連結";
+  const target = isScore ? getGoogleDrivePreviewUrl(resource.url) : resource.url;
+  const thumb = isVideo ? getYoutubeThumbnail(resource.url) : "";
 
   return (
-    <div className={`practiceResourceCard ${resource.type}`}>
-      {/* YouTube */}
-      {resource.type === "youtube" && (
-        <div className="videoBox">
-          {!isPlaying ? (
-            <div
-              className="videoThumbWrapper"
-              onClick={() => setIsPlaying(true)}
-            >
-              <img
-                className="videoThumb"
-                src={thumb}
-                alt={`${resource.title}縮圖`}
-              />
-              <div className="playButton">▶</div>
-            </div>
-          ) : (
-            <iframe
-              className="videoIframe"
-              src={embedUrl}
-              title={resource.title}
-              allowFullScreen
-            ></iframe>
-          )}
+    <div className={`flatResourceRow ${expanded ? "isExpanded" : ""}`}>
+      <div className="flatResourceMain">
+        {isVideo && thumb ? (
+          <button type="button" className="flatVideoThumb" onClick={() => setExpanded((value) => !value)}
+            aria-label={`${expanded ? "收合" : "播放"}${resource.title || "示範影片"}`}>
+            <img src={thumb} alt="" loading="lazy" />
+            <span aria-hidden="true">▶</span>
+          </button>
+        ) : <span className="flatResourceIcon" aria-hidden="true">{isScore ? "♬" : isVideo ? "▶" : "♫"}</span>}
+        <div className="flatResourceInfo">
+          <span className="flatResourceType">{typeLabel}</span>
+          <strong>{resource.title || (isScore ? "開啟樂譜" : "練習資源")}</strong>
+        </div>
+        {isVideo ? (
+          <button className="flatResourceAction" type="button"
+            aria-expanded={expanded} onClick={() => setExpanded((value) => !value)}>
+            {expanded ? "收合" : "播放"} <span aria-hidden="true">{expanded ? "↑" : "→"}</span>
+          </button>
+        ) : (
+          <a className="flatResourceAction" href={target || resource.url}
+            target="_blank" rel="noopener noreferrer" aria-label={`開啟${resource.title || typeLabel}（新分頁）`}>
+            開啟 <span aria-hidden="true">↗</span>
+          </a>
+        )}
+      </div>
+      {isVideo && expanded && (
+        <div className="flatVideoPlayer">
+          <iframe src={getYoutubeEmbedUrl(resource.url)} title={resource.title || "練習影片"}
+            loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerPolicy="strict-origin-when-cross-origin" allowFullScreen />
         </div>
       )}
-
-      {/* PDF */}
-      {resource.type === "score" && (
-        <iframe
-          className="pdfPreview"
-          src={getGoogleDrivePreviewUrl(resource.url)}
-          title={resource.title}
-        ></iframe>
-      )}
-
-      {/* 其他（音檔/連結） */}
-      {resource.type !== "youtube" && resource.type !== "score" && (
-        <a href={resource.url} target="_blank" rel="noreferrer">
-          開啟資源
-        </a>
-      )}
-
-      {/* 標題 */}
-      <div className="resourceMeta">
-        <strong>{resource.title}</strong>
-        <span>{resource.voicePart || "全體"}</span>
-      </div>
     </div>
   );
 }
 
 function SongPracticeResources({ song, showHeader = true }) {
-  if (!song) {
-    return <p className="muted">找不到曲目資料。</p>;
-  }
-
+  if (!song) return <p className="muted">找不到曲目資料。</p>;
   const resources = song.resources || [];
-
-  const partOrder = [
-    "全體",
-    "女高音",
-    "女低音",
-    "男高音",
-    "男低音",
-    "伴奏",
-    "其他",
-  ];
-
-  const groupedResources = resources.reduce((groups, resource) => {
-    const part = resource.voicePart || "其他";
-
-    if (!groups[part]) {
-      groups[part] = [];
-    }
-
-    groups[part].push(resource);
-    return groups;
+  const grouped = resources.reduce((all, resource) => {
+    const part = resource.voicePart || "全體";
+    (all[part] ||= []).push(resource);
+    return all;
   }, {});
-
-  const sortedParts = partOrder.filter((part) => groupedResources[part]);
+  const parts = Object.keys(grouped).sort((a, b) => {
+    const first = VOICE_PART_ORDER.indexOf(a);
+    const second = VOICE_PART_ORDER.indexOf(b);
+    return (first === -1 ? 999 : first) - (second === -1 ? 999 : second) || a.localeCompare(b, "zh-TW");
+  });
 
   return (
-    <div className="practiceBox">
+    <div className="flatPracticeBox">
       {showHeader && (
-        <>
+        <div className="flatSongIntro">
           <h4>{song.title}</h4>
-
-          <p className="muted">
-            調性：{song.key || "-"}｜速度：{song.tempo || "-"}
-          </p>
-
+          <p className="muted">調性：{song.key || "-"}｜速度：{song.tempo || "-"}</p>
           {song.note && <p>{song.note}</p>}
-        </>
+        </div>
       )}
-
-      {resources.length === 0 ? (
-        <p className="muted">尚未建立練習資源。</p>
-      ) : (
-        <div className="voicePartGroups">
-          {sortedParts.map((part) => (
-            <div className="voicePartGroup" key={part}>
-              <div className="voicePartTitle">
-                <span>{part}</span>
-                <small>{groupedResources[part].length} 個資源</small>
-              </div>
-
-              <div className="practiceResourceGrid">
-                {groupedResources[part].map((resource) => (
-                  <ResourceCard key={resource.id} resource={resource} />
+      {resources.length === 0 ? <p className="flatEmptyResource">尚未建立練習資源。</p> : (
+        <div className="flatPartList">
+          {parts.map((part) => (
+            <details className="flatPart" key={part} open={part === parts[0]}>
+              <summary>
+                <span className="flatPartName">{part}</span>
+                <span className="flatPartCount">{grouped[part].length} 個資源</span>
+                <span className="flatPartChevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div className="flatResourceList">
+                {grouped[part].map((resource) => (
+                  <ResourceRow key={resource.id} resource={resource} />
                 ))}
               </div>
-            </div>
+            </details>
           ))}
         </div>
       )}
