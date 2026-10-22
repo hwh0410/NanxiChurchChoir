@@ -58,3 +58,5 @@
   .flatResourceAction { padding-inline: 7px; }
   .flatPart > summary { min-height: 48px; }
 }
+
+.homePractice .schedulePracticeItem:has(.flatPracticeBox) { background: transparent; border-left: 0; border-right: 0; border-top: 0; border-bottom: 1px solid #e8e1d4; border-radius: 0; box-shadow: none; }
