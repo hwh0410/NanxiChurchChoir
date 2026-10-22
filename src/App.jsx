@@ -11,6 +11,7 @@ import "./styles.css";
 import "./theme-v1.css";
 import "./calendar-v1.css";
 import "./admin-phase2.css";
+import "./practice-flat.css";
 import { filterAndSortSchedules, dateInTaiwan, nextSundayDate } from "./utils/adminSchedulePolish.mjs";
 import { validateScheduleDraft, makeScheduleFromDraft, cloneScheduleDraft, insertSchedule } from "./utils/adminSchedulePlanner.mjs";
 import {
