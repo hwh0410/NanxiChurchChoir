@@ -144,7 +144,7 @@ function ResourceRow({ resource }) {
           <button type="button" className="flatVideoThumb" onClick={() => setExpanded((value) => !value)}
             aria-label={`${expanded ? "收合" : "播放"}${resource.title || "示範影片"}`}>
             <img src={thumb} alt="" loading="lazy" />
-            <span aria-hidden="true">▶</span>
+            <span className="homeVideoPlay" aria-hidden="true"><Play /></span>
           </button>
         ) : <span className="flatResourceIcon" aria-hidden="true">{isScore ? "♬" : isVideo ? "▶" : "♫"}</span>}
         <div className="flatResourceInfo">
@@ -783,9 +783,11 @@ function ArchiveVideoCard({ video }) {
   return (
     <article className="miniCard videoCard">
       {!isPlaying ? (
-        <div
+        <button
+          type="button"
           className="videoThumbWrapper"
           onClick={() => setIsPlaying(true)}
+          aria-label={`播放${video.title}`}
         >
           {thumbnail ? (
             <img
@@ -797,8 +799,8 @@ function ArchiveVideoCard({ video }) {
             <div className="videoPlaceholder">無縮圖</div>
           )}
 
-          <div className="playButton">▶</div>
-        </div>
+          <span className="homeVideoPlay" aria-hidden="true"><Play /></span>
+        </button>
       ) : (
         <iframe
           className="videoIframe"
