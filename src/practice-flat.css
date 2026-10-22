@@ -60,3 +60,27 @@
 }
 
 .homePractice .schedulePracticeItem:has(.flatPracticeBox) { background: transparent; border-left: 0; border-right: 0; border-top: 0; border-bottom: 1px solid #e8e1d4; border-radius: 0; box-shadow: none; }
+
+/* Use the exact homepage video play treatment in compact practice rows. */
+.flatVideoThumb > .homeVideoPlay {
+  inset: auto;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 33px;
+  height: 33px;
+  border-radius: 50%;
+  background: rgba(69, 93, 61, .84);
+  color: white;
+  font-size: inherit;
+}
+.flatVideoThumb > .homeVideoPlay svg { width: 15px; height: 15px; }
+.videoThumbWrapper {
+  border: 0;
+  padding: 0;
+  width: 100%;
+  font: inherit;
+  text-align: left;
+}
+.videoThumbWrapper:focus-visible,
+.flatVideoThumb:focus-visible { outline: 3px solid #4e6e50; outline-offset: 3px; }
