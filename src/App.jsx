@@ -199,7 +199,7 @@ function SongPracticeResources({ song, showHeader = true }) {
       {resources.length === 0 ? <p className="flatEmptyResource">尚未建立練習資源。</p> : (
         <div className="flatPartList">
           {parts.map((part) => (
-            <details className="flatPart" key={part} open={undefined}>
+            <details className="flatPart" key={part} open={part === parts[0]}>
               <summary>
                 <span className="flatPartName">{part}</span>
                 <span className="flatPartCount">{grouped[part].length} 個資源</span>
