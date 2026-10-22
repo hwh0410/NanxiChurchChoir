@@ -10,9 +10,11 @@ export function filterAndSortSchedules(schedules, query, order = "upcoming") {
     : a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
 }
 export function dateInTaiwan(date = new Date()) {
-  return new Intl.DateTimeFormat("en-CA", {
+  const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: "Asia/Taipei", year: "numeric", month: "2-digit", day: "2-digit"
-  }).format(date);
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+  return `${values.year}-${values.month}-${values.day}`;
 }
 export function nextSundayDate(from) {
   const [year, month, day] = from.split("-").map(Number);
